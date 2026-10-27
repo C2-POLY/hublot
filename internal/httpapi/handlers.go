@@ -14,10 +14,10 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/et-technology-consulting/hublot/internal/auth"
-	"github.com/et-technology-consulting/hublot/internal/authz"
-	"github.com/et-technology-consulting/hublot/internal/db"
-	"github.com/et-technology-consulting/hublot/internal/portal"
+	"github.com/C2-POLY/hublot/internal/auth"
+	"github.com/C2-POLY/hublot/internal/authz"
+	"github.com/C2-POLY/hublot/internal/db"
+	"github.com/C2-POLY/hublot/internal/portal"
 )
 
 func (s *Server) magicLink(w http.ResponseWriter, r *http.Request) {

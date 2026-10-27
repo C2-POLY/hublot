@@ -18,11 +18,11 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/et-technology-consulting/hublot/internal/auth"
-	"github.com/et-technology-consulting/hublot/internal/authz"
-	"github.com/et-technology-consulting/hublot/internal/config"
-	"github.com/et-technology-consulting/hublot/internal/db"
-	"github.com/et-technology-consulting/hublot/internal/portal"
+	"github.com/C2-POLY/hublot/internal/auth"
+	"github.com/C2-POLY/hublot/internal/authz"
+	"github.com/C2-POLY/hublot/internal/config"
+	"github.com/C2-POLY/hublot/internal/db"
+	"github.com/C2-POLY/hublot/internal/portal"
 )
 
 const SessionCookie = "hublot_session"

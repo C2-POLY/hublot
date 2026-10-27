@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useTranslation } from 'react-i18next'
 
-export const SOURCE_URL = 'https://github.com/et-technology-consulting/hublot'
+export const SOURCE_URL = 'https://github.com/C2-POLY/hublot'
 
 /** AGPL-3.0 §13: the interface offers its own source code. */
 export function Footer() {

@@ -25,14 +25,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/et-technology-consulting/hublot/internal/auth"
-	"github.com/et-technology-consulting/hublot/internal/config"
-	"github.com/et-technology-consulting/hublot/internal/db"
-	"github.com/et-technology-consulting/hublot/internal/forge"
-	"github.com/et-technology-consulting/hublot/internal/httpapi"
-	"github.com/et-technology-consulting/hublot/internal/mail"
-	"github.com/et-technology-consulting/hublot/internal/portal"
-	"github.com/et-technology-consulting/hublot/internal/storage"
+	"github.com/C2-POLY/hublot/internal/auth"
+	"github.com/C2-POLY/hublot/internal/config"
+	"github.com/C2-POLY/hublot/internal/db"
+	"github.com/C2-POLY/hublot/internal/forge"
+	"github.com/C2-POLY/hublot/internal/httpapi"
+	"github.com/C2-POLY/hublot/internal/mail"
+	"github.com/C2-POLY/hublot/internal/portal"
+	"github.com/C2-POLY/hublot/internal/storage"
 )
 
 const testConfig = `

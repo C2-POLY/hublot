@@ -14,10 +14,10 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/et-technology-consulting/hublot/internal/authz"
-	"github.com/et-technology-consulting/hublot/internal/config"
-	"github.com/et-technology-consulting/hublot/internal/db"
-	"github.com/et-technology-consulting/hublot/internal/forge"
+	"github.com/C2-POLY/hublot/internal/authz"
+	"github.com/C2-POLY/hublot/internal/config"
+	"github.com/C2-POLY/hublot/internal/db"
+	"github.com/C2-POLY/hublot/internal/forge"
 )
 
 const (

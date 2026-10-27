@@ -17,9 +17,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/et-technology-consulting/hublot/internal/authz"
-	"github.com/et-technology-consulting/hublot/internal/db"
-	"github.com/et-technology-consulting/hublot/internal/storage"
+	"github.com/C2-POLY/hublot/internal/authz"
+	"github.com/C2-POLY/hublot/internal/db"
+	"github.com/C2-POLY/hublot/internal/storage"
 )
 
 // Allowed types, recognised from the content itself and never from the name.

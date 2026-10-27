@@ -36,5 +36,5 @@ a GitHub issue.
 - One Docker image (binary with the web app embedded), PostgreSQL, a fake forge and Mailpit
   for local development.
 
-[Unreleased]: https://github.com/et-technology-consulting/hublot/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/et-technology-consulting/hublot/releases/tag/v0.1.0
+[Unreleased]: https://github.com/C2-POLY/hublot/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/C2-POLY/hublot/releases/tag/v0.1.0

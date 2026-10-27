@@ -21,9 +21,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/et-technology-consulting/hublot/internal/config"
-	"github.com/et-technology-consulting/hublot/internal/db"
-	hmail "github.com/et-technology-consulting/hublot/internal/mail"
+	"github.com/C2-POLY/hublot/internal/config"
+	"github.com/C2-POLY/hublot/internal/db"
+	hmail "github.com/C2-POLY/hublot/internal/mail"
 )
 
 const (

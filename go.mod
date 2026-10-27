@@ -1,4 +1,4 @@
-module github.com/et-technology-consulting/hublot
+module github.com/C2-POLY/hublot
 
 go 1.26.0
 
