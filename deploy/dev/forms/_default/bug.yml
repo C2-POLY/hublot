@@ -1,0 +1,29 @@
+name: Signaler un problème
+description: Quelque chose ne marche pas comme prévu.
+labels: [bug]
+type: Bug
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: Ce qui s'est passé
+      description: Ce que vous avez fait, et ce qui s'est passé à la place de ce que vous attendiez.
+      placeholder: Rapport mensuel du client, export du lundi matin.
+  - type: input
+    id: where
+    attributes:
+      label: Où ?
+      description: L'écran, la page ou le menu concerné.
+      placeholder: Rapports › Export PDF
+    validations:
+      required: true
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Ça vous gêne à quel point ?
+      options:
+        - Je suis bloqué
+        - C'est gênant
+        - C'est un détail
+    validations:
+      required: true

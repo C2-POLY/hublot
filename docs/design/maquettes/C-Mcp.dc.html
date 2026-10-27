@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Hublot, Claude et MCP (Franc)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#F4F1EC}
+a{color:#111111}a:hover{color:#3A3A3A}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 1150px; box-sizing: border-box; background: #F4F1EC; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #111111">
+  <dc-import name="Header" active="reglages" admin="true" initials="ET" hint-size="100%,96px"></dc-import>
+
+  <main style="max-width: 1240px; margin: 0 auto; padding: 28px 28px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 44px; letter-spacing: -0.02em">Réglages</h1>
+      <nav aria-label="Sections des réglages" style="display: flex; border: 2.5px solid #111111; border-radius: 12px; overflow: hidden; background: #FFFFFF">
+        <a href="C-Reglages.dc.html" style="height: 42px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; font-size: 15px">Logiciels</a>
+        <a href="#" aria-current="page" style="height: 42px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; font-size: 15px; background: #111111; color: #FFFFFF; border-left: 2.5px solid #111111">Claude et MCP</a>
+        <a href="#" style="height: 42px; padding: 0 16px; display: inline-flex; align-items: center; text-decoration: none; font-weight: 700; font-size: 15px; border-left: 2.5px solid #111111">GitHub</a>
+      </nav>
+    </div>
+
+    <section style="padding: 22px 24px; border: 3px solid #111111; border-radius: 20px; background: #B9AEFF; box-shadow: 6px 6px 0 #111111; display: flex; flex-wrap: wrap; gap: 24px; align-items: center">
+      <div style="flex: 1 1 420px; min-width: 0; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; align-items: center; gap: 12px">
+          <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 28px">Créer depuis Claude</h2>
+          <button role="switch" aria-checked="{{onLabel}}" onClick="{{toggleOn}}" style="{{onStyle}}">{{onText}}</button>
+        </div>
+        <p style="margin: 0; font-size: 17px; line-height: 1.5">Claude peut chercher, créer et compléter des fonctionnalités et leurs issues, au nom de la personne connectée et avec ses droits.</p>
+        <label for="mcp-url" style="font-weight: 700; font-size: 14px; margin-top: 4px">Commande à lancer dans Claude Code</label>
+        <div style="display: flex; gap: 8px">
+          <input id="mcp-url" readonly value="claude mcp add --transport http hublot https://hublot.novamoon.fr/mcp" style="flex: 1; min-width: 0; height: 48px; box-sizing: border-box; border: 2.5px solid #111111; border-radius: 12px; padding: 0 12px; font: 500 14px 'IBM Plex Mono', monospace; color: #111111; background: #FFFFFF">
+          <button onClick="{{copy}}" style="height: 48px; padding: 0 16px; border: 2.5px solid #111111; border-radius: 12px; background: #FFE066; font: 700 15px 'Atkinson Hyperlegible', sans-serif; color: #111111">{{copyText}}</button>
+        </div>
+        <p style="margin: 0; font-size: 14px">Ou ajoutez l'adresse <span style="font-family: 'IBM Plex Mono', monospace">https://hublot.novamoon.fr/mcp</span> comme connecteur dans l'app Claude. Connexion par votre compte Hublot.</p>
+      </div>
+      <div style="flex: 1 1 340px; min-width: 0; border: 2.5px solid #111111; border-radius: 16px; background: #111111; color: #F4F1EC; overflow: hidden">
+        <p style="margin: 0; padding: 10px 14px; border-bottom: 2px solid #3A3A3A; font-size: 13px; font-weight: 700; color: #FFE066">Exemple de prompt</p>
+        <p style="margin: 0; padding: 14px; font-size: 15px; line-height: 1.5">« Crée la fonctionnalité Export Excel des campagnes pour NovaMoon Ads, découpe-la en issues prêtes pour toi. »</p>
+        <p style="margin: 0; padding: 12px 14px; border-top: 2px dashed #3A3A3A; font-size: 14px; color: #7FD8B6">1 fonctionnalité et 4 issues créées en brouillon · 4 sur 4 prêtes</p>
+      </div>
+    </section>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+      <section aria-labelledby="mode" style="flex: 1 1 360px; min-width: 0; padding: 20px; border: 2.5px solid #111111; border-radius: 18px; background: #FFFFFF; display: flex; flex-direction: column; gap: 12px">
+        <h2 id="mode" style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">Ce que Claude crée arrive&#8230;</h2>
+        <div role="radiogroup" aria-label="Mode de création" style="display: flex; flex-direction: column; gap: 10px">
+          <button role="radio" aria-checked="{{draftChecked}}" onClick="{{setDraft}}" style="{{draftStyle}}"><strong style="display: block; font-size: 16px">En brouillon, à valider</strong><span style="font-size: 14px">Visible dans Hublot, envoyé dans GitHub après votre accord. Conseillé.</span></button>
+          <button role="radio" aria-checked="{{directChecked}}" onClick="{{setDirect}}" style="{{directStyle}}"><strong style="display: block; font-size: 16px">Directement dans GitHub</strong><span style="font-size: 14px">Seulement si l'issue est prête. Sinon, brouillon.</span></button>
+        </div>
+        <p style="margin: 4px 0 0; padding: 10px 12px; border: 2px dashed #111111; border-radius: 10px; font-size: 14px; line-height: 1.45">Dans les deux cas, les règles sont les mêmes que dans l'interface : mêmes champs, même jauge « prête », mêmes droits.</p>
+      </section>
+
+      <section aria-labelledby="tools" style="flex: 1.3 1 460px; min-width: 0; border: 2.5px solid #111111; border-radius: 18px; background: #FFFFFF; overflow: hidden">
+        <h2 id="tools" style="margin: 0; padding: 16px 20px; border-bottom: 2.5px solid #111111; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">Ce que Claude peut faire</h2>
+        <ul style="list-style: none; margin: 0; padding: 0">
+          <sc-for list="{{tools}}" as="t" hint-placeholder-count="8">
+            <li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 11px 20px; border-bottom: 2px solid #E2DDD3">
+              <span><strong style="display: block; font-size: 15px">{{t.label}}</strong><span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #3A3A3A">{{t.name}}</span></span>
+              <button role="switch" aria-checked="{{t.checked}}" aria-label="{{t.aria}}" onClick="{{t.toggle}}" style="{{t.style}}"><span style="{{t.knob}}"></span></button>
+            </li>
+          </sc-for>
+        </ul>
+      </section>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-start">
+      <section aria-labelledby="tokens" style="flex: 1 1 460px; min-width: 0; border: 2.5px solid #111111; border-radius: 18px; background: #FFFFFF; overflow: hidden">
+        <div style="padding: 14px 20px; border-bottom: 2.5px solid #111111; display: flex; justify-content: space-between; align-items: center; gap: 10px">
+          <h2 id="tokens" style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">Jetons personnels</h2>
+          <button onClick="{{addToken}}" style="height: 40px; padding: 0 14px; border: 2.5px solid #111111; border-radius: 10px; background: #FFE066; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Nouveau jeton</button>
+        </div>
+        <ul style="list-style: none; margin: 0; padding: 0">
+          <sc-for list="{{tokens}}" as="k" hint-placeholder-count="2">
+            <li style="display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 12px 20px; border-bottom: 2px solid #E2DDD3">
+              <span><strong style="display: block; font-size: 15px">{{k.name}}</strong><span style="font-size: 13px; color: #3A3A3A">{{k.meta}}</span></span>
+              <button onClick="{{k.revoke}}" style="height: 38px; padding: 0 12px; border: 2px solid #111111; border-radius: 10px; background: #FFFFFF; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Révoquer</button>
+            </li>
+          </sc-for>
+        </ul>
+        <p style="margin: 0; padding: 12px 20px; font-size: 13px; color: #3A3A3A">Un jeton agit avec les droits de la personne qui l'a créé. Il n'est affiché qu'une fois.</p>
+      </section>
+
+      <section aria-labelledby="log" style="flex: 1 1 460px; min-width: 0; border: 2.5px solid #111111; border-radius: 18px; background: #FFFFFF; overflow: hidden">
+        <h2 id="log" style="margin: 0; padding: 16px 20px; border-bottom: 2.5px solid #111111; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">Fait via Claude</h2>
+        <ul style="list-style: none; margin: 0; padding: 0; font-size: 14px">
+          <li style="display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 12px; padding: 11px 20px; border-bottom: 2px solid #E2DDD3"><span style="font-family: 'IBM Plex Mono', monospace; color: #3A3A3A">10:42</span><span><strong>Enzo</strong> · a créé « Export Excel des campagnes » et 4 issues, en brouillon</span></li>
+          <li style="display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 12px; padding: 11px 20px; border-bottom: 2px solid #E2DDD3"><span style="font-family: 'IBM Plex Mono', monospace; color: #3A3A3A">10:38</span><span><strong>Enzo</strong> · a complété les critères de #417</span></li>
+          <li style="display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 12px; padding: 11px 20px; border-bottom: 2px solid #E2DDD3"><span style="font-family: 'IBM Plex Mono', monospace; color: #3A3A3A">hier</span><span><strong>Karim</strong> · a classé 3 demandes TableAgent</span></li>
+          <li style="display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 12px; padding: 11px 20px"><span style="font-family: 'IBM Plex Mono', monospace; color: #3A3A3A">hier</span><span><strong>Enzo</strong> · refusé : « Accès » n'est pas autorisé pour NovoAgent</span></li>
+        </ul>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1150}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      on: true,
+      mode: 'draft',
+      copied: false,
+      tools: [
+        { name: 'create_feature', label: 'Créer une fonctionnalité et ses issues', on: true },
+        { name: 'create_issue · update_issue', label: 'Créer ou compléter une issue', on: true },
+        { name: 'check_ready', label: 'Vérifier qu’une issue est prête', on: true },
+        { name: 'search · get_feature · get_issue', label: 'Chercher et lire', on: true },
+        { name: 'link_requests', label: 'Rattacher des demandes de l’équipe', on: true },
+        { name: 'triage', label: 'Classer les demandes entrantes', on: false },
+        { name: 'roadmap', label: 'Lire ce qui arrive', on: true }
+      ],
+      tokens: [
+        { name: 'MacBook Enzo · Claude Code', meta: 'Créé le 20 oct. · utilisé il y a 5 min' },
+        { name: 'Agent de nuit (CI)', meta: 'Créé le 2 oct. · utilisé hier' }
+      ]
+    };
+  }
+  renderVals() {
+    const st = this.state;
+    const sw = (on) => 'width: 54px; height: 30px; border: 2.5px solid #111111; border-radius: 999px; padding: 0; position: relative; cursor: pointer; background: ' + (on ? '#7FD8B6' : '#FFFFFF') + ';';
+    const knob = (on) => 'position: absolute; top: 2px; left: ' + (on ? '26px' : '2px') + '; width: 21px; height: 21px; border: 2px solid #111111; border-radius: 999px; background: #FFFFFF; box-sizing: border-box;';
+    const card = (on) => 'text-align: left; padding: 14px 16px; border-radius: 14px; color: #111111; font-family: inherit; cursor: pointer; ' + (on ? 'border: 3px solid #111111; background: #FFE066; box-shadow: 4px 4px 0 #111111;' : 'border: 2.5px solid #111111; background: #FFFFFF;');
+    return {
+      onLabel: st.on ? 'true' : 'false',
+      onText: st.on ? 'Activé' : 'Désactivé',
+      onStyle: 'height: 36px; padding: 0 14px; border: 2.5px solid #111111; border-radius: 999px; font: 700 14px Atkinson Hyperlegible, sans-serif; color: #111111; cursor: pointer; background: ' + (st.on ? '#7FD8B6' : '#FFFFFF') + ';',
+      toggleOn: () => this.setState({ on: !st.on }),
+      copy: () => this.setState({ copied: true }),
+      copyText: st.copied ? 'Copié' : 'Copier',
+      draftChecked: st.mode === 'draft' ? 'true' : 'false',
+      directChecked: st.mode === 'direct' ? 'true' : 'false',
+      draftStyle: card(st.mode === 'draft'),
+      directStyle: card(st.mode === 'direct'),
+      setDraft: () => this.setState({ mode: 'draft' }),
+      setDirect: () => this.setState({ mode: 'direct' }),
+      tools: st.tools.map((t, i) => ({ ...t, checked: t.on ? 'true' : 'false', aria: t.label, style: sw(t.on), knob: knob(t.on), toggle: () => this.setState({ tools: st.tools.map((x, j) => j === i ? { ...x, on: !x.on } : x) }) })),
+      tokens: st.tokens.map((k, i) => ({ ...k, revoke: () => this.setState({ tokens: st.tokens.filter((_, j) => j !== i) }) })),
+      addToken: () => this.setState({ tokens: st.tokens.concat([{ name: 'Nouveau jeton', meta: 'Créé à l’instant · jamais utilisé' }]) })
+    };
+  }
+}
+</script>
+</body>
+</html>

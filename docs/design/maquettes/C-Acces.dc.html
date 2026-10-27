@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Hublot, personnes et accès (Franc)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>
+body{margin:0;background:#F4F1EC}
+a{color:#111111}a:hover{color:#3A3A3A}
+select{font:700 14px 'Atkinson Hyperlegible',sans-serif;color:#111111}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 1000px; box-sizing: border-box; background: #F4F1EC; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #111111">
+  <dc-import name="Header" active="acces" admin="true" initials="ET" hint-size="100%,96px"></dc-import>
+
+  <main style="max-width: 1240px; margin: 0 auto; padding: 28px 28px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 18px">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 40px; letter-spacing: -0.02em">Personnes et accès</h1>
+      <div style="display: flex; gap: 10px">
+        <div role="tablist" aria-label="Vue" style="display: flex; border: 2.5px solid #111111; border-radius: 12px; overflow: hidden; background: #FFFFFF">
+          <button role="tab" aria-selected="true" style="height: 42px; padding: 0 16px; border: 0; background: #111111; color: #FFFFFF; font: 700 15px 'Atkinson Hyperlegible', sans-serif">Personnes · 14</button>
+          <button role="tab" aria-selected="false" style="height: 42px; padding: 0 16px; border: 0; border-left: 2.5px solid #111111; background: #FFFFFF; color: #111111; font: 700 15px 'Atkinson Hyperlegible', sans-serif">Groupes · 3</button>
+        </div>
+        <button style="height: 46px; padding: 0 18px; border: 3px solid #111111; border-radius: 12px; background: #FFE066; box-shadow: 4px 4px 0 #111111; font: 800 16px 'Bricolage Grotesque', sans-serif; color: #111111">Ajouter une personne</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <section aria-label="Liste des personnes" style="flex: 999 1 520px; min-width: 0; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; overflow: hidden">
+        <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; padding: 10px 16px; border-bottom: 2.5px solid #111111; font-size: 13px; font-weight: 700">
+          <span>Personne</span><span>Groupes</span><span>Logiciels</span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; padding: 14px 16px; border-bottom: 2px solid #E2DDD3; background: #FFF6CC; align-items: center">
+          <span><strong style="display: block">Marie Dupont</strong><span style="font-size: 13px; color: #3A3A3A">marie.dupont@novamoon.fr</span></span>
+          <span><span style="padding: 3px 8px; border: 2px solid #111111; border-radius: 999px; font-size: 12px; font-weight: 700">Support</span></span>
+          <span style="display: flex; flex-wrap: wrap; gap: 4px"><span style="padding: 3px 8px; border: 2px solid #111111; border-radius: 8px; background: #B9AEFF; font-size: 12px; font-weight: 700">Ads · Déclarant</span><span style="padding: 3px 8px; border: 2px solid #111111; border-radius: 8px; background: #7FD8B6; font-size: 12px; font-weight: 700">NovoAgent · Déclarant</span></span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; padding: 14px 16px; border-bottom: 2px solid #E2DDD3; align-items: center">
+          <span><strong style="display: block">Karim Benali</strong><span style="font-size: 13px; color: #3A3A3A">karim.b@novamoon.fr</span></span>
+          <span><span style="padding: 3px 8px; border: 2px solid #111111; border-radius: 999px; font-size: 12px; font-weight: 700">Ops</span></span>
+          <span style="display: flex; flex-wrap: wrap; gap: 4px"><span style="padding: 3px 8px; border: 2px solid #111111; border-radius: 8px; background: #FF9A62; font-size: 12px; font-weight: 700">TableAgent · Trieur</span></span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; padding: 14px 16px; border-bottom: 2px solid #E2DDD3; align-items: center">
+          <span><strong style="display: block">Sophie Laurent</strong><span style="font-size: 13px; color: #3A3A3A">sophie.l@novamoon.fr</span></span>
+          <span><span style="padding: 3px 8px; border: 2px solid #111111; border-radius: 999px; font-size: 12px; font-weight: 700">Direction</span></span>
+          <span style="display: flex; flex-wrap: wrap; gap: 4px"><span style="padding: 3px 8px; border: 2px solid #111111; border-radius: 8px; background: #FFFFFF; font-size: 12px; font-weight: 700">Tous · Lecteur</span></span>
+        </div>
+        <div style="display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.4fr); gap: 12px; padding: 14px 16px; align-items: center; color: #3A3A3A">
+          <span><strong style="display: block; color: #111111">Léa Martin</strong><span style="font-size: 13px">invitation envoyée</span></span>
+          <span>Aucun</span>
+          <span style="font-size: 13px; font-weight: 700">Aucun accès pour l'instant</span>
+        </div>
+      </section>
+
+      <aside aria-labelledby="who" style="flex: 1 1 360px; min-width: 0; border: 3px solid #111111; border-radius: 18px; background: #FFFFFF; box-shadow: 5px 5px 0 #111111; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <div>
+          <h2 id="who" style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px">Marie Dupont</h2>
+          <p style="margin: 2px 0 0; font-size: 14px; color: #3A3A3A">Membre · groupe Support</p>
+        </div>
+        <p style="margin: 0; font-weight: 700; font-size: 14px">Accès par logiciel</p>
+        <label style="display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center"><span aria-hidden="true" style="width: 12px; height: 32px; border: 2px solid #111111; border-radius: 4px; background: #B9AEFF"></span><span><strong style="display: block; font-size: 15px">NovaMoon Ads</strong><span style="font-size: 12px; color: #3A3A3A">hérité du groupe Support</span></span><select style="height: 36px; border: 2px solid #111111; border-radius: 8px; background: #FFFFFF"><option>Déclarant</option><option>Lecteur</option><option>Contributeur</option><option>Trieur</option><option>Responsable</option><option>Aucun accès</option></select></label>
+        <label style="display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center"><span aria-hidden="true" style="width: 12px; height: 32px; border: 2px solid #111111; border-radius: 4px; background: #FF9A62"></span><span><strong style="display: block; font-size: 15px">TableAgent</strong><span style="font-size: 12px; color: #3A3A3A">aucun accès</span></span><select style="height: 36px; border: 2px solid #111111; border-radius: 8px; background: #FFFFFF"><option>Aucun accès</option><option>Lecteur</option><option>Déclarant</option><option>Contributeur</option><option>Trieur</option><option>Responsable</option></select></label>
+        <label style="display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 10px; align-items: center"><span aria-hidden="true" style="width: 12px; height: 32px; border: 2px solid #111111; border-radius: 4px; background: #7FD8B6"></span><span><strong style="display: block; font-size: 15px">NovoAgent</strong><span style="font-size: 12px; color: #3A3A3A">attribué directement</span></span><select style="height: 36px; border: 2px solid #111111; border-radius: 8px; background: #FFFFFF"><option>Déclarant</option><option>Lecteur</option><option>Contributeur</option><option>Trieur</option><option>Responsable</option><option>Aucun accès</option></select></label>
+        <p style="margin: 4px 0 0; padding: 10px 12px; border: 2px dashed #111111; border-radius: 10px; font-size: 14px; line-height: 1.45"><strong>Déclarant</strong> : dépose et suit ses propres demandes. Ne voit pas celles des autres.</p>
+        <div style="display: flex; gap: 8px; margin-top: 4px">
+          <button style="height: 42px; padding: 0 16px; border: 2.5px solid #111111; border-radius: 10px; background: #111111; color: #FFFFFF; font: 700 15px 'Atkinson Hyperlegible', sans-serif">Enregistrer</button>
+          <button style="height: 42px; padding: 0 14px; border: 2.5px solid #111111; border-radius: 10px; background: #FFFFFF; color: #111111; font: 700 15px 'Atkinson Hyperlegible', sans-serif">Suspendre</button>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

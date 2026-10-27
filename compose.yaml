@@ -1,0 +1,42 @@
+# Local stack: `docker compose up --build`, then open http://localhost:8080
+# and read the sign-in e-mails at http://localhost:8025 (Mailpit).
+# Ports taken on your machine? Set HUBLOT_PORT, HUBLOT_PG_PORT, HUBLOT_MAIL_PORT.
+services:
+  postgres:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_USER: hublot
+      POSTGRES_PASSWORD: hublot
+      POSTGRES_DB: hublot
+    ports: ["${HUBLOT_PG_PORT:-5439}:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hublot"]
+      interval: 2s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.27
+    ports: ["${HUBLOT_MAIL_PORT:-8025}:8025", "${HUBLOT_SMTP_PORT:-1025}:1025"]
+
+  hublot:
+    build: .
+    depends_on:
+      postgres: { condition: service_healthy }
+    environment:
+      HUBLOT_CONFIG: /etc/hublot/hublot.yaml
+      HUBLOT_BASE_URL: http://localhost:${HUBLOT_PORT:-8080}
+      HUBLOT_LISTEN: ":8080"
+      HUBLOT_DATABASE_URL: postgres://hublot:hublot@postgres:5432/hublot?sslmode=disable
+      HUBLOT_SMTP_HOST: mailpit
+      HUBLOT_STORAGE_DIR: /var/lib/hublot/attachments
+      HUBLOT_FAKE_FORMS: /etc/hublot/forms
+    volumes:
+      - ./deploy/dev/hublot.dev.yaml:/etc/hublot/hublot.yaml:ro
+      - ./deploy/dev/forms:/etc/hublot/forms:ro
+      - attachments:/var/lib/hublot/attachments
+    ports: ["${HUBLOT_PORT:-8080}:8080"]
+
+volumes:
+  pgdata:
+  attachments:

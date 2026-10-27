@@ -1,0 +1,415 @@
+{
+  "v": 3,
+  "createdOnFiles": {
+    "v": 1,
+    "at": "2026-10-25T10:00:00Z"
+  },
+  "title": "Hublot · 3 directions",
+  "launch": {
+    "view": "canvas"
+  },
+  "pages": [],
+  "boards": {
+    "Main.dc.html": {
+      "x": 0,
+      "y": 260,
+      "w": 1280,
+      "h": 860,
+      "title": "A · Éditorial · Accueil",
+      "expand": "fill"
+    },
+    "A-Depot.dc.html": {
+      "x": 1360,
+      "y": 260,
+      "w": 390,
+      "h": 844,
+      "title": "A · Éditorial · Dépôt (mobile)"
+    },
+    "A-Suivi.dc.html": {
+      "x": 1830,
+      "y": 260,
+      "w": 1280,
+      "h": 860,
+      "title": "A · Éditorial · Suivi",
+      "expand": "fill"
+    },
+    "B-Accueil.dc.html": {
+      "x": 0,
+      "y": 1600,
+      "w": 1280,
+      "h": 860,
+      "title": "B · Messagerie · Accueil",
+      "expand": "fill"
+    },
+    "B-Depot.dc.html": {
+      "x": 1360,
+      "y": 1600,
+      "w": 390,
+      "h": 844,
+      "title": "B · Messagerie · Dépôt (mobile)"
+    },
+    "B-Suivi.dc.html": {
+      "x": 1830,
+      "y": 1600,
+      "w": 1280,
+      "h": 860,
+      "title": "B · Messagerie · Suivi",
+      "expand": "fill"
+    },
+    "C-Accueil.dc.html": {
+      "x": 0,
+      "y": 2940,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Franc · Accueil",
+      "expand": "fill"
+    },
+    "C-Depot.dc.html": {
+      "x": 1360,
+      "y": 2940,
+      "w": 390,
+      "h": 844,
+      "title": "C · Franc · Dépôt 1/4 : logiciel (mobile)"
+    },
+    "C-Suivi.dc.html": {
+      "x": 1830,
+      "y": 2940,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Franc · Suivi",
+      "expand": "fill"
+    },
+    "C-Roadmap.dc.html": {
+      "x": 3190,
+      "y": 2940,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Franc · Ce qui arrive",
+      "expand": "fill"
+    },
+    "C-Nouveautes.dc.html": {
+      "x": 4550,
+      "y": 2940,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Franc · Nouveautés",
+      "expand": "fill"
+    },
+    "C-Triage.dc.html": {
+      "x": 5910,
+      "y": 2940,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Franc · Triage (admin)",
+      "expand": "fill"
+    },
+    "C-Connexion.dc.html": {
+      "x": 0,
+      "y": 4280,
+      "w": 1280,
+      "h": 860,
+      "title": "C · Connexion par lien magique",
+      "expand": "fill"
+    },
+    "C-LienEnvoye.dc.html": {
+      "x": 1360,
+      "y": 4280,
+      "w": 390,
+      "h": 844,
+      "title": "C · Lien envoyé (mobile)"
+    },
+    "C-Depot2.dc.html": {
+      "x": 1830,
+      "y": 4280,
+      "w": 390,
+      "h": 844,
+      "title": "C · Dépôt 2/4 : type (mobile)"
+    },
+    "C-Depot3.dc.html": {
+      "x": 2300,
+      "y": 4280,
+      "w": 390,
+      "h": 844,
+      "title": "C · Dépôt 3/4 : récit et capture (mobile)"
+    },
+    "C-Depot4.dc.html": {
+      "x": 2770,
+      "y": 4280,
+      "w": 390,
+      "h": 844,
+      "title": "C · Dépôt 4/4 : envoyé (mobile)"
+    },
+    "C-SuiviMobile.dc.html": {
+      "x": 3240,
+      "y": 4280,
+      "w": 390,
+      "h": 844,
+      "title": "C · Suivi (mobile)"
+    },
+    "C-Demandes.dc.html": {
+      "x": 3710,
+      "y": 4280,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Mes demandes",
+      "expand": "fill"
+    },
+    "C-Email.dc.html": {
+      "x": 5070,
+      "y": 4280,
+      "w": 680,
+      "h": 860,
+      "title": "C · E-mail de notification"
+    },
+    "C-NouvelleDemande.dc.html": {
+      "x": 5830,
+      "y": 4280,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Nouvelle demande (web, interactif)",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "C-Acces.dc.html": {
+      "x": 0,
+      "y": 5620,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Personnes et accès (admin)",
+      "expand": "fill"
+    },
+    "C-Reglages.dc.html": {
+      "x": 1360,
+      "y": 5620,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Réglages des logiciels (admin)",
+      "expand": "fill"
+    },
+    "C-Features.dc.html": {
+      "x": 2720,
+      "y": 5620,
+      "w": 1280,
+      "h": 1000,
+      "title": "C · Fonctionnalités (admin)",
+      "expand": "fill"
+    },
+    "C-Feature.dc.html": {
+      "x": 4080,
+      "y": 5620,
+      "w": 1280,
+      "h": 1180,
+      "title": "C · Nouvelle fonctionnalité et ses issues (admin)",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Header.dc.html": {
+      "x": 5440,
+      "y": 5620,
+      "w": 1280,
+      "h": 96,
+      "title": "Composant · En-tête partagé"
+    },
+    "C-Issue.dc.html": {
+      "x": 6800,
+      "y": 5620,
+      "w": 1280,
+      "h": 1200,
+      "title": "C · Détailler une issue, guidé (admin, interactif)",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Site.dc.html": {
+      "x": 0,
+      "y": 7200,
+      "w": 1440,
+      "h": 4700,
+      "title": "Site vitrine open source · FR",
+      "expand": "fill"
+    },
+    "C-Mcp.dc.html": {
+      "x": 8160,
+      "y": 5620,
+      "w": 1280,
+      "h": 1150,
+      "title": "C · Réglages › Claude et MCP (admin, interactif)",
+      "expand": "fill",
+      "is_interactive": true
+    },
+    "Hero-Hublot.dc.html": {
+      "x": 0,
+      "y": 12400,
+      "w": 1440,
+      "h": 900,
+      "title": "Accueil · option 1 : le hublot qui donne sur l'app",
+      "expand": "fill"
+    },
+    "Hero-Banniere.dc.html": {
+      "x": 1520,
+      "y": 12400,
+      "w": 1440,
+      "h": 900,
+      "title": "Accueil · option 2 : l'avion banderole",
+      "expand": "fill"
+    },
+    "Hero-Cabine.dc.html": {
+      "x": 3040,
+      "y": 12400,
+      "w": 1440,
+      "h": 900,
+      "title": "Accueil · option 3 : la rangée de hublots",
+      "expand": "fill"
+    },
+    "Hero-Embarquement.dc.html": {
+      "x": 4560,
+      "y": 12400,
+      "w": 1440,
+      "h": 900,
+      "title": "Accueil · option 4 : la carte d'embarquement",
+      "expand": "fill"
+    },
+    "Pistes-1.dc.html": {
+      "x": 0,
+      "y": 13800,
+      "w": 1440,
+      "h": 1260,
+      "title": "12 pistes visuelles · 1 à 6"
+    },
+    "Pistes-2.dc.html": {
+      "x": 1520,
+      "y": 13800,
+      "w": 1440,
+      "h": 1260,
+      "title": "12 pistes visuelles · 7 à 12"
+    },
+    "Voyage.dc.html": {
+      "x": 0,
+      "y": 15560,
+      "w": 1440,
+      "h": 1100,
+      "title": "Le voyage : un même hublot, un véhicule par projet",
+      "expand": "fill"
+    },
+    "Emblemes.dc.html": {
+      "x": 1520,
+      "y": 15560,
+      "w": 1440,
+      "h": 1100,
+      "title": "Les emblèmes : un véhicule par logiciel, le hublot comme logo"
+    },
+    "Site-EN.dc.html": {
+      "x": 1520,
+      "y": 7200,
+      "w": 1440,
+      "h": 4700,
+      "title": "Open source website · EN",
+      "expand": "fill"
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "A-Depot.dc.html",
+    "A-Suivi.dc.html",
+    "B-Accueil.dc.html",
+    "B-Depot.dc.html",
+    "B-Suivi.dc.html",
+    "C-Accueil.dc.html",
+    "C-Depot.dc.html",
+    "C-Suivi.dc.html",
+    "C-Roadmap.dc.html",
+    "C-Nouveautes.dc.html",
+    "C-Triage.dc.html",
+    "C-Connexion.dc.html",
+    "C-LienEnvoye.dc.html",
+    "C-Depot2.dc.html",
+    "C-Depot3.dc.html",
+    "C-Depot4.dc.html",
+    "C-SuiviMobile.dc.html",
+    "C-Demandes.dc.html",
+    "C-Email.dc.html",
+    "C-NouvelleDemande.dc.html",
+    "C-Acces.dc.html",
+    "C-Reglages.dc.html",
+    "C-Features.dc.html",
+    "C-Feature.dc.html",
+    "Header.dc.html",
+    "C-Issue.dc.html",
+    "Site.dc.html",
+    "C-Mcp.dc.html",
+    "Hero-Hublot.dc.html",
+    "Hero-Banniere.dc.html",
+    "Hero-Cabine.dc.html",
+    "Hero-Embarquement.dc.html",
+    "Pistes-1.dc.html",
+    "Pistes-2.dc.html",
+    "Voyage.dc.html",
+    "Emblemes.dc.html",
+    "Site-EN.dc.html"
+  ],
+  "notes": {
+    "rowA": {
+      "x": 0,
+      "y": 0,
+      "text": "A · Éditorial : grille stricte, noir sur blanc, un orange signal",
+      "kind": "title1",
+      "maxW": 3110
+    },
+    "rowB": {
+      "x": 0,
+      "y": 1340,
+      "text": "B · Messagerie : tout est une conversation, sur papier sauge",
+      "kind": "title1",
+      "maxW": 3110
+    },
+    "rowC": {
+      "x": 0,
+      "y": 2680,
+      "text": "C · Franc (retenue) : une couleur par logiciel, contours épais",
+      "kind": "title1",
+      "maxW": 7190
+    },
+    "rowD": {
+      "x": 0,
+      "y": 4020,
+      "text": "C · Franc : parcours de l'équipe",
+      "kind": "title1",
+      "maxW": 7110
+    },
+    "rowE": {
+      "x": 0,
+      "y": 5360,
+      "text": "C · Franc : administration et fonctionnalités",
+      "kind": "title1",
+      "maxW": 9440
+    },
+    "rowF": {
+      "x": 0,
+      "y": 6940,
+      "text": "Site vitrine open source · FR et EN",
+      "kind": "title1",
+      "maxW": 2960
+    },
+    "rowG": {
+      "x": 0,
+      "y": 12140,
+      "text": "Haut de page : clins d'œil avion et hublot",
+      "kind": "title1",
+      "maxW": 5920
+    },
+    "rowH": {
+      "x": 0,
+      "y": 13540,
+      "text": "12 pistes visuelles avion et hublot",
+      "kind": "title1",
+      "maxW": 2960
+    },
+    "rowI": {
+      "x": 0,
+      "y": 15300,
+      "text": "Un même hublot, un véhicule par projet, une fusée pour l'entreprise",
+      "kind": "title1",
+      "maxW": 2960
+    }
+  },
+  "designSystems": []
+}

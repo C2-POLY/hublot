@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Hublot, en-tête partagé</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<header style="width: 100%; box-sizing: border-box; background: #FFFFFF; border-bottom: 3px solid #111111; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #111111">
+  <div style="max-width: 1240px; margin: 0 auto; padding: 14px 28px; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 16px; min-height: 93px">
+    <a href="C-Accueil.dc.html" aria-label="Hublot, accueil" style="display: flex; align-items: center; gap: 9px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 25px; letter-spacing: -0.02em; text-decoration: none; color: #111111">
+      <svg aria-hidden="true" width="30" height="30" viewBox="0 0 30 30" fill="none"><circle cx="15" cy="15" r="12.5" fill="#FFE066" stroke="#111111" stroke-width="2.5"></circle><circle cx="15" cy="15" r="5.5" fill="#111111"></circle></svg>
+      hublot
+    </a>
+    <nav aria-label="Navigation principale" style="display: flex; flex-wrap: wrap; align-items: center; gap: 4px; flex: 1 1 auto">
+      <sc-for list="{{team}}" as="item" hint-placeholder-count="4">
+        <a href="{{item.href}}" style="{{item.style}}">{{item.label}}</a>
+      </sc-for>
+      <sc-if value="{{admin}}" hint-placeholder-val="{{true}}">
+        <span aria-hidden="true" style="width: 2.5px; height: 28px; background: #111111; margin: 0 8px; border-radius: 2px"></span>
+        <sc-for list="{{staff}}" as="item" hint-placeholder-count="4">
+          <a href="{{item.href}}" style="{{item.style}}">{{item.label}}<sc-if value="{{item.hasBadge}}" hint-placeholder-val="{{false}}"><span style="margin-left: 6px; min-width: 20px; height: 20px; padding: 0 6px; box-sizing: border-box; border: 2px solid #111111; border-radius: 999px; background: #FF9A62; color: #111111; font-size: 12px; display: inline-flex; align-items: center; justify-content: center">{{item.badge}}</span></sc-if></a>
+        </sc-for>
+      </sc-if>
+    </nav>
+    <a href="C-NouvelleDemande.dc.html" style="height: 44px; box-sizing: border-box; padding: 0 16px; border: 2.5px solid #111111; border-radius: 12px; background: #FFE066; box-shadow: 3px 3px 0 #111111; color: #111111; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="3.2" stroke-linecap="round"><path d="M12 4v16M4 12h16"></path></svg>Demande</a>
+    <button aria-label="{{accountLabel}}" style="width: 44px; height: 44px; border: 2.5px solid #111111; border-radius: 12px; background: {{avatar}}; font: 700 15px 'Atkinson Hyperlegible', sans-serif; color: #111111">{{initials}}</button>
+  </div>
+</header>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"active":{"editor":"enum","options":["accueil","demandes","roadmap","nouveautes","triage","features","acces","reglages"],"default":"accueil"},"admin":{"editor":"boolean","default":false},"initials":{"editor":"text","default":"MD"},"$preview":{"width":1280,"height":96}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const active = this.props.active ?? 'accueil';
+    const admin = this.props.admin === true || this.props.admin === 'true';
+    const base = 'height: 42px; box-sizing: border-box; padding: 0 14px; border-radius: 12px; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; ';
+    const on = 'border: 2.5px solid #111111; background: #111111; color: #FFFFFF;';
+    const off = 'border: 2.5px solid transparent; background: transparent; color: #111111;';
+    const mk = (id, label, href, badge) => ({ label, href, badge: badge || '', hasBadge: !!badge, style: base + (active === id ? on : off) });
+    const initials = this.props.initials ?? (admin ? 'ET' : 'MD');
+    return {
+      admin,
+      team: [
+        mk('accueil', 'Accueil', 'C-Accueil.dc.html'),
+        mk('demandes', 'Mes demandes', 'C-Demandes.dc.html'),
+        mk('roadmap', 'Ce qui arrive', 'C-Roadmap.dc.html'),
+        mk('nouveautes', 'Nouveautés', 'C-Nouveautes.dc.html')
+      ],
+      staff: [
+        mk('triage', 'À trier', 'C-Triage.dc.html', '6'),
+        mk('features', 'Fonctionnalités', 'C-Features.dc.html'),
+        mk('acces', 'Accès', 'C-Acces.dc.html'),
+        mk('reglages', 'Réglages', 'C-Reglages.dc.html')
+      ],
+      initials,
+      avatar: admin ? '#7FD8B6' : '#FF9A62',
+      accountLabel: 'Mon compte, ' + initials
+    };
+  }
+}
+</script>
+</body>
+</html>

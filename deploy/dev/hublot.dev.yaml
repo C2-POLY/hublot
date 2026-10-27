@@ -1,0 +1,59 @@
+# Local development: fake forge (issues stay in memory), e-mails to Mailpit,
+# attachments on disk. Used by `make dev` and compose.yaml.
+base_url: ${HUBLOT_BASE_URL}
+listen: ${HUBLOT_LISTEN}
+database_url: ${HUBLOT_DATABASE_URL}
+secret: dev-secret-not-for-production-0123456789abcdef
+web_dir: ${HUBLOT_WEB_DIR}
+
+auth:
+  allowed_domains: [acme.test]
+  bootstrap_owners: [enzo@acme.test]
+
+mail:
+  driver: smtp
+  from: "Hublot <hublot@acme.test>"
+  host: ${HUBLOT_SMTP_HOST}
+  port: 1025
+
+storage:
+  driver: fs
+  dir: ${HUBLOT_STORAGE_DIR}
+
+forge:
+  driver: fake
+  fake_dir: ${HUBLOT_FAKE_FORMS}
+
+projects:
+  - slug: boutique
+    name: Boutique en ligne
+    hint: Le site marchand
+    color: "#B9AEFF"
+    vehicle: boat
+    repo: acme/boutique
+  - slug: app-mobile
+    name: App mobile
+    hint: iOS et Android
+    color: "#FF9A62"
+    vehicle: plane
+    repo: acme/app-mobile
+  - slug: outil-interne
+    name: Outil interne
+    hint: Le back-office
+    color: "#7FD8B6"
+    vehicle: train
+    repo: acme/outil-interne
+    reporters_see_all: true
+  - slug: site-vitrine
+    name: Site vitrine
+    hint: Le site public
+    color: "#FFE066"
+    vehicle: submarine
+    repo: acme/site-vitrine
+  - slug: retours
+    name: Je ne sais pas
+    hint: L'équipe s'en occupe
+    color: "#FFFFFF"
+    vehicle: rocket
+    repo: acme/retours
+    inbox: true

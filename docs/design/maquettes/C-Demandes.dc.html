@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Hublot, mes demandes (Franc)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>
+body{margin:0;background:#F4F1EC}
+a{color:#111111}a:hover{color:#3A3A3A}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 1000px; box-sizing: border-box; background: #F4F1EC; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #111111">
+  <dc-import name="Header" active="demandes" initials="MD" hint-size="100%,96px"></dc-import>
+
+  <main style="max-width: 1240px; margin: 0 auto; padding: 28px 28px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 16px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 56px; line-height: 0.95; letter-spacing: -0.03em">Mes demandes</h1>
+      <a href="C-NouvelleDemande.dc.html" style="display: inline-flex; align-items: center; gap: 10px; padding: 14px 20px; border: 3px solid #111111; border-radius: 16px; background: #FFE066; box-shadow: 5px 5px 0 #111111; text-decoration: none; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 18px"><svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111111" stroke-width="3" stroke-linecap="round"><path d="M12 4v16M4 12h16"></path></svg>Nouvelle demande</a>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px">
+      <div role="tablist" aria-label="Filtrer par état" style="display: flex; border: 2.5px solid #111111; border-radius: 14px; overflow: hidden; background: #FFFFFF">
+        <button role="tab" aria-selected="true" style="height: 44px; padding: 0 18px; border: 0; background: #111111; color: #FFFFFF; font: 700 15px 'Atkinson Hyperlegible', sans-serif">En cours · 6</button>
+        <button role="tab" aria-selected="false" style="height: 44px; padding: 0 18px; border: 0; border-left: 2.5px solid #111111; background: #FFFFFF; color: #111111; font: 700 15px 'Atkinson Hyperlegible', sans-serif">Disponibles · 12</button>
+        <button role="tab" aria-selected="false" style="height: 44px; padding: 0 18px; border: 0; border-left: 2.5px solid #111111; background: #FFFFFF; color: #111111; font: 700 15px 'Atkinson Hyperlegible', sans-serif">Je suis aussi · 4</button>
+      </div>
+      <label for="search-c" style="position: absolute; left: -9999px">Rechercher</label>
+      <input id="search-c" placeholder="Rechercher une demande" style="flex: 0 1 320px; min-width: 0; height: 48px; box-sizing: border-box; border: 2.5px solid #111111; border-radius: 14px; padding: 0 14px; font: 16px 'Atkinson Hyperlegible', sans-serif; color: #111111; background: #FFFFFF">
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px">
+      <a href="C-Suivi.dc.html" style="display: grid; grid-template-columns: 12px minmax(0, 1fr) 200px 130px; align-items: stretch; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #111111; overflow: hidden">
+        <span aria-hidden="true" style="background: #B9AEFF; border-right: 2.5px solid #111111"></span>
+        <span style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px"><strong style="font-size: 18px">Le rapport PDF est illisible</strong><span style="padding: 2px 8px; border: 2px solid #111111; border-radius: 999px; background: #FF9A62; font-size: 12px; font-weight: 700">1 nouveau message</span></span><span style="font-size: 14px; color: #3A3A3A">NovaMoon Ads · un problème · envoyée le 14 oct.</span></span>
+        <span style="padding: 16px 0; display: flex; align-items: center"><span aria-label="4 étapes sur 5" style="display: flex; gap: 4px; width: 100%"><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #FFE066"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px"></span></span></span>
+        <span style="padding: 16px 18px; display: flex; align-items: center; justify-content: flex-end"><span style="padding: 6px 12px; border: 2px solid #111111; border-radius: 999px; background: #FFE066; font-weight: 700; font-size: 14px">En test</span></span>
+      </a>
+      <a href="#" style="display: grid; grid-template-columns: 12px minmax(0, 1fr) 200px 130px; align-items: stretch; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #111111; overflow: hidden">
+        <span aria-hidden="true" style="background: #FF9A62; border-right: 2.5px solid #111111"></span>
+        <span style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 18px">Pouvoir dupliquer une réservation</strong><span style="font-size: 14px; color: #3A3A3A">TableAgent · une idée · envoyée le 2 oct.</span></span>
+        <span style="padding: 16px 0; display: flex; align-items: center"><span aria-label="2 étapes sur 5" style="display: flex; gap: 4px; width: 100%"><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #FFE066"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px"></span></span></span>
+        <span style="padding: 16px 18px; display: flex; align-items: center; justify-content: flex-end"><span style="padding: 6px 12px; border: 2px solid #111111; border-radius: 999px; background: #FFFFFF; font-weight: 700; font-size: 14px">Planifiée</span></span>
+      </a>
+      <a href="#" style="display: grid; grid-template-columns: 12px minmax(0, 1fr) 200px 130px; align-items: stretch; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #111111; overflow: hidden">
+        <span aria-hidden="true" style="background: #7FD8B6; border-right: 2.5px solid #111111"></span>
+        <span style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><span style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px"><strong style="font-size: 18px">Accès aux enregistrements d'un client</strong><span style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border: 2px solid #111111; border-radius: 999px; font-size: 12px; font-weight: 700"><svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#111111" stroke-width="1.8"><rect x="2" y="5.5" width="8" height="5.5" rx="1.2"></rect><path d="M4 5.5V4a2 2 0 014 0v1.5"></path></svg>Confidentielle</span></span><span style="font-size: 14px; color: #3A3A3A">NovoAgent · une question · envoyée hier</span></span>
+        <span style="padding: 16px 0; display: flex; align-items: center"><span aria-label="1 étape sur 5" style="display: flex; gap: 4px; width: 100%"><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #FFE066"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px"></span></span></span>
+        <span style="padding: 16px 18px; display: flex; align-items: center; justify-content: flex-end"><span style="padding: 6px 12px; border: 2px solid #111111; border-radius: 999px; background: #FFFFFF; font-weight: 700; font-size: 14px">Reçue</span></span>
+      </a>
+      <a href="#" style="display: grid; grid-template-columns: 12px minmax(0, 1fr) 200px 130px; align-items: stretch; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #111111; overflow: hidden">
+        <span aria-hidden="true" style="background: #B9AEFF; border-right: 2.5px solid #111111"></span>
+        <span style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 18px">Filtrer les campagnes par client</strong><span style="font-size: 14px; color: #3A3A3A">NovaMoon Ads · une idée · envoyée le 30 sept.</span></span>
+        <span style="padding: 16px 0; display: flex; align-items: center"><span aria-label="3 étapes sur 5" style="display: flex; gap: 4px; width: 100%"><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #FFE066"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: transparent"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #7FD8B6"></span></span></span>
+        <span style="padding: 16px 18px; display: flex; align-items: center; justify-content: flex-end"><span style="padding: 6px 12px; border: 2px solid #111111; border-radius: 999px; background: #B9AEFF; color: #111111; font-weight: 700; font-size: 14px">En réalisation</span></span>
+      </a>
+      <a href="#" style="display: grid; grid-template-columns: 12px minmax(0, 1fr) 200px 130px; align-items: stretch; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #111111; overflow: hidden">
+        <span aria-hidden="true" style="background: #FFFFFF; border-right: 2.5px solid #111111"></span>
+        <span style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 18px">Le formulaire de contact n'envoie rien</strong><span style="font-size: 14px; color: #3A3A3A">Site vitrine · un problème · envoyée le 22 sept.</span></span>
+        <span style="padding: 16px 0; display: flex; align-items: center"><span aria-label="5 étapes sur 5" style="display: flex; gap: 4px; width: 100%"><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #7FD8B6"></span></span></span>
+        <span style="padding: 16px 18px; display: flex; align-items: center; justify-content: flex-end"><span style="padding: 6px 12px; border: 2px solid #111111; border-radius: 999px; background: #111111; color: #FFFFFF; font-weight: 700; font-size: 14px">Disponible</span></span>
+      </a>
+      <a href="#" style="display: grid; grid-template-columns: 12px minmax(0, 1fr) 200px 130px; align-items: stretch; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; text-decoration: none; color: #111111; overflow: hidden">
+        <span aria-hidden="true" style="background: #FF9A62; border-right: 2.5px solid #111111"></span>
+        <span style="padding: 16px 18px; display: flex; flex-direction: column; gap: 4px"><strong style="font-size: 18px">Comment modifier l'horaire d'ouverture ?</strong><span style="font-size: 14px; color: #3A3A3A">TableAgent · une question · envoyée le 18 sept.</span></span>
+        <span style="padding: 16px 0; display: flex; align-items: center"><span aria-label="5 étapes sur 5" style="display: flex; gap: 4px; width: 100%"><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #111111"></span><span style="flex: 1; height: 10px; border: 2px solid #111111; border-radius: 5px; background: #7FD8B6"></span></span></span>
+        <span style="padding: 16px 18px; display: flex; align-items: center; justify-content: flex-end"><span style="padding: 6px 12px; border: 2px solid #111111; border-radius: 999px; background: #7FD8B6; color: #111111; font-weight: 700; font-size: 14px">Répondue</span></span>
+      </a>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

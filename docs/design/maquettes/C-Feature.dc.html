@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Hublot, nouvelle fonctionnalité (Franc)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;family=IBM+Plex+Mono:wght@500&amp;display=swap">
+<style>
+body{margin:0;background:#F4F1EC}
+a{color:#111111}a:hover{color:#3A3A3A}
+select{font:700 14px 'Atkinson Hyperlegible',sans-serif;color:#111111}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 1180px; box-sizing: border-box; background: #F4F1EC; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #111111">
+  <dc-import name="Header" active="features" admin="true" initials="ET" hint-size="100%,96px"></dc-import>
+
+  <main style="max-width: 1240px; margin: 0 auto; padding: 24px 28px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px">
+    <div style="display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px">
+      <div>
+        <a href="C-Features.dc.html" style="font-weight: 700; font-size: 15px">Fonctionnalités</a>
+        <h1 style="margin: 6px 0 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 44px; line-height: 0.95; letter-spacing: -0.03em">Nouvelle fonctionnalité</h1>
+      </div>
+      <div style="display: flex; gap: 10px">
+        <button style="height: 48px; padding: 0 16px; border: 2.5px solid #111111; border-radius: 12px; background: #FFFFFF; font: 700 15px 'Atkinson Hyperlegible', sans-serif; color: #111111">Brouillon</button>
+        <button style="height: 48px; padding: 0 20px; border: 3px solid #111111; border-radius: 12px; background: #FFE066; box-shadow: 4px 4px 0 #111111; font: 800 17px 'Bricolage Grotesque', sans-serif; color: #111111">Créer dans GitHub</button>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start">
+      <section aria-labelledby="def" style="flex: 1 1 400px; min-width: 0; border: 2.5px solid #111111; border-radius: 18px; background: #FFFFFF; padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <h2 id="def" style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">La fonctionnalité</h2>
+
+        <fieldset style="border: 0; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px">
+          <legend style="font-weight: 700; font-size: 14px; margin-bottom: 8px">Logiciel</legend>
+          <label style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 3px solid #111111; border-radius: 999px; background: #B9AEFF; font-weight: 700; font-size: 14px"><input type="radio" name="soft" checked style="margin: 0; accent-color: #111111">NovaMoon Ads</label>
+          <label style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 2px solid #111111; border-radius: 999px; background: #FF9A62; font-weight: 700; font-size: 14px"><input type="radio" name="soft" style="margin: 0; accent-color: #111111">TableAgent</label>
+          <label style="display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: 2px solid #111111; border-radius: 999px; background: #7FD8B6; font-weight: 700; font-size: 14px"><input type="radio" name="soft" style="margin: 0; accent-color: #111111">NovoAgent</label>
+        </fieldset>
+
+        <label for="f-title" style="font-weight: 700; font-size: 14px">Titre interne <span style="font-weight: 400; color: #3A3A3A">(vu dans GitHub)</span></label>
+        <input id="f-title" value="PDF report: handle long tables across pages" style="height: 46px; box-sizing: border-box; border: 2.5px solid #111111; border-radius: 12px; padding: 0 12px; font: 500 15px 'IBM Plex Mono', monospace; color: #111111">
+
+        <label for="f-public" style="font-weight: 700; font-size: 14px">Titre public <span style="font-weight: 400; color: #3A3A3A">(vu par l'équipe)</span></label>
+        <div style="display: flex; gap: 8px">
+          <input id="f-public" value="Rapports PDF lisibles sur les longs tableaux" style="flex: 1; min-width: 0; height: 46px; box-sizing: border-box; border: 2.5px solid #111111; border-radius: 12px; padding: 0 12px; font: 16px 'Atkinson Hyperlegible', sans-serif; color: #111111">
+          <button style="height: 46px; padding: 0 12px; border: 2.5px solid #111111; border-radius: 12px; background: #F4F1EC; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Proposer</button>
+        </div>
+
+        <label for="f-desc" style="font-weight: 700; font-size: 14px">Ce que ça change pour l'équipe</label>
+        <textarea id="f-desc" style="height: 92px; box-sizing: border-box; border: 2.5px solid #111111; border-radius: 12px; padding: 10px 12px; font: 16px 'Atkinson Hyperlegible', sans-serif; color: #111111; resize: vertical">Les rapports mensuels s'exportent proprement, même avec de longs tableaux : plus de colonnes coupées ni de textes qui se chevauchent.</textarea>
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px">
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: 14px">Version<select style="height: 44px; border: 2.5px solid #111111; border-radius: 12px; background: #FFFFFF; padding: 0 8px"><option>Novembre</option><option>Décembre</option><option>Non fixée</option></select></label>
+          <label style="display: flex; flex-direction: column; gap: 6px; font-weight: 700; font-size: 14px">Date visée<input type="date" value="2026-11-14" style="height: 44px; box-sizing: border-box; border: 2.5px solid #111111; border-radius: 12px; padding: 0 10px; font: 15px 'Atkinson Hyperlegible', sans-serif; color: #111111"></label>
+        </div>
+
+        <label style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; padding: 12px; border: 2px dashed #111111; border-radius: 12px"><span><strong style="display: block; font-size: 15px">Montrer sur « Ce qui arrive »</strong><span style="font-size: 13px; color: #3A3A3A">Toute l'équipe verra son titre public et sa date</span></span><input type="checkbox" role="switch" checked style="width: 22px; height: 22px; margin: 0; accent-color: #111111"></label>
+
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <p style="margin: 0; font-weight: 700; font-size: 14px">Demandes à l'origine <span style="font-weight: 400; color: #3A3A3A">· prévenues à chaque étape</span></p>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px">
+            <span style="padding: 6px 10px; border: 2px solid #111111; border-radius: 10px; background: #FFF6CC; font-size: 14px"><strong>PDF illisible</strong> · Marie + 2</span>
+            <span style="padding: 6px 10px; border: 2px solid #111111; border-radius: 10px; background: #FFF6CC; font-size: 14px"><strong>Tableaux coupés</strong> · Karim</span>
+            <button style="height: 34px; padding: 0 10px; border: 2px dashed #111111; border-radius: 10px; background: #FFFFFF; font: 700 13px 'Atkinson Hyperlegible', sans-serif; color: #111111">Lier une demande</button>
+          </div>
+        </div>
+      </section>
+
+      <section aria-labelledby="iss" style="flex: 1.3 1 520px; min-width: 0; border: 3px solid #111111; border-radius: 18px; background: #FFFFFF; box-shadow: 5px 5px 0 #111111; overflow: hidden">
+        <div style="padding: 18px 20px; border-bottom: 3px solid #111111; background: #B9AEFF; display: flex; flex-direction: column; gap: 10px">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 12px">
+            <h2 id="iss" style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 24px">Issues</h2>
+            <span style="font-weight: 700; font-size: 15px">{{doneCount}} sur {{total}} terminées</span>
+          </div>
+          <span aria-hidden="true" style="height: 14px; border: 2.5px solid #111111; border-radius: 8px; background: #FFFFFF; overflow: hidden; display: flex"><span style="width: {{pct}}%; background: #111111"></span></span>
+        </div>
+
+        <ul style="list-style: none; margin: 0; padding: 0">
+          <sc-for list="{{issues}}" as="item" hint-placeholder-count="5">
+            <li style="display: grid; grid-template-columns: 28px minmax(0, 1fr) auto auto auto auto; gap: 12px; align-items: center; padding: 12px 20px; border-bottom: 2px solid #E2DDD3">
+              <input type="checkbox" aria-label="{{item.checkLabel}}" checked="{{item.done}}" onChange="{{item.toggle}}" style="width: 22px; height: 22px; margin: 0; accent-color: #111111">
+              <span style="min-width: 0"><span style="{{item.titleStyle}}">{{item.title}}</span><span style="display: block; font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: #3A3A3A">{{item.ref}}</span></span>
+              <span style="{{item.typeStyle}}">{{item.type}}</span>
+              <span aria-label="{{item.whoLabel}}" style="width: 32px; height: 32px; border: 2px solid #111111; border-radius: 10px; background: {{item.whoColor}}; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center">{{item.who}}</span>
+              <span title="Champs remplis" style="{{item.readyStyle}}">{{item.readyText}}</span>
+              <a href="C-Issue.dc.html" style="font-weight: 700; font-size: 14px">Détailler</a>
+            </li>
+          </sc-for>
+        </ul>
+
+        <div style="padding: 14px 20px 18px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center">
+          <label for="new-issue" style="position: absolute; left: -9999px">Nouvelle issue</label>
+          <input id="new-issue" placeholder="Ajouter une issue, par exemple : tester sur trois clients" value="{{draft}}" onChange="{{onDraft}}" style="flex: 1 1 260px; min-width: 0; height: 46px; box-sizing: border-box; border: 2.5px solid #111111; border-radius: 12px; padding: 0 12px; font: 15px 'Atkinson Hyperlegible', sans-serif; color: #111111">
+          <label style="position: absolute; left: -9999px" for="new-type">Type</label>
+          <select id="new-type" style="height: 46px; border: 2.5px solid #111111; border-radius: 12px; background: #FFFFFF; padding: 0 8px"><option>Tâche</option><option>Bug</option></select>
+          <button onClick="{{add}}" style="height: 46px; padding: 0 16px; border: 2.5px solid #111111; border-radius: 12px; background: #111111; color: #FFFFFF; font: 700 15px 'Atkinson Hyperlegible', sans-serif">Ajouter</button>
+        </div>
+        <p style="margin: 0; padding: 12px 20px; border-top: 2px dashed #111111; background: #F9F7F3; font-size: 14px; line-height: 1.5">Dans GitHub : une issue de type <strong>Feature</strong> dans <span style="font-family: 'IBM Plex Mono', monospace">NovaMoonMedia/media-poste-ads</span>, et chaque ligne ci-dessus en <strong>sous-issue</strong>. Les cases suivent l'état réel des issues.</p>
+      </section>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1180}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      draft: '',
+      issues: [
+        { title: 'Découper les tableaux sur plusieurs pages', ref: '#413', type: 'Tâche', who: 'ET', done: true, ok: 6 },
+        { title: 'Répéter l’en-tête de tableau sur chaque page', ref: '#414', type: 'Tâche', who: 'ET', done: true, ok: 6 },
+        { title: 'Textes qui se chevauchent dans les cellules longues', ref: '#415', type: 'Bug', who: 'KB', done: true, ok: 7 },
+        { title: 'Tester sur les rapports Allamau, Bricorama, 86connect', ref: '#416', type: 'Tâche', who: 'ET', done: true, ok: 6 },
+        { title: 'Mettre en production', ref: '#417', type: 'Tâche', who: '?', done: false, ok: 2 }
+      ]
+    };
+  }
+  renderVals() {
+    const issues = this.state.issues.map((it, i) => ({
+      ...it,
+      checkLabel: (it.done ? 'Rouvrir : ' : 'Terminer : ') + it.title,
+      titleStyle: 'display: block; font-weight: 700; font-size: 15px;' + (it.done ? ' text-decoration: line-through; color: #5A5A5A;' : ''),
+      typeStyle: 'padding: 4px 9px; border: 2px solid #111111; border-radius: 999px; font-size: 12px; font-weight: 700; background: ' + (it.type === 'Bug' ? '#FF9A62' : '#FFFFFF') + ';',
+      readyText: (it.ok >= (it.type === 'Bug' ? 7 : 6)) ? 'Prête' : (it.ok + '/' + (it.type === 'Bug' ? 7 : 6)),
+      readyStyle: 'padding: 4px 9px; border: 2px solid #111111; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; background: ' + ((it.ok >= (it.type === 'Bug' ? 7 : 6)) ? '#7FD8B6' : '#FFF6CC') + ';',
+      whoColor: it.who === '?' ? '#FFFFFF' : (it.who === 'KB' ? '#FF9A62' : '#7FD8B6'),
+      whoLabel: it.who === '?' ? 'Personne n’est assigné' : 'Assignée à ' + it.who,
+      toggle: () => this.setState({ issues: this.state.issues.map((x, j) => j === i ? { ...x, done: !x.done } : x) })
+    }));
+    const doneCount = this.state.issues.filter((x) => x.done).length;
+    const total = this.state.issues.length;
+    return {
+      issues,
+      doneCount,
+      total,
+      pct: total ? Math.round(doneCount * 100 / total) : 0,
+      draft: this.state.draft,
+      onDraft: (e) => this.setState({ draft: e.target.value }),
+      add: () => {
+        const title = this.state.draft.trim();
+        if (!title) return;
+        this.setState({ draft: '', issues: this.state.issues.concat([{ title, ref: 'nouvelle', type: 'Tâche', who: '?', done: false, ok: 1 }]) });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

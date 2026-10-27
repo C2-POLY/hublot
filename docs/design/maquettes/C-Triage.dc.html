@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>Hublot, triage (Franc)</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>
+body{margin:0;background:#F4F1EC}
+a{color:#111111}a:hover{color:#3A3A3A}
+select{font:700 14px 'Atkinson Hyperlegible',sans-serif;color:#111111}
+</style>
+</helmet>
+<div style="width: 100%; min-height: 1000px; box-sizing: border-box; background: #F4F1EC; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #111111">
+  <dc-import name="Header" active="triage" admin="true" initials="ET" hint-size="100%,96px"></dc-import>
+
+  <main style="max-width: 1240px; margin: 0 auto; padding: 28px 28px 56px; box-sizing: border-box; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 14px">
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 40px; letter-spacing: -0.02em">À trier</h1>
+      <div role="group" aria-label="Filtrer" style="display: flex; flex-wrap: wrap; gap: 6px">
+        <button aria-pressed="true" style="height: 36px; padding: 0 12px; border: 2px solid #111111; border-radius: 999px; background: #111111; color: #FFFFFF; font: 700 13px 'Atkinson Hyperlegible', sans-serif">Tous (6)</button>
+        <button aria-pressed="false" style="height: 36px; padding: 0 12px; border: 2px solid #111111; border-radius: 999px; background: #B9AEFF; font: 700 13px 'Atkinson Hyperlegible', sans-serif; color: #111111">NovaMoon Ads (3)</button>
+        <button aria-pressed="false" style="height: 36px; padding: 0 12px; border: 2px solid #111111; border-radius: 999px; background: #FF9A62; font: 700 13px 'Atkinson Hyperlegible', sans-serif; color: #111111">TableAgent (2)</button>
+        <button aria-pressed="false" style="height: 36px; padding: 0 12px; border: 2px dashed #111111; border-radius: 999px; background: #FFFFFF; font: 700 13px 'Atkinson Hyperlegible', sans-serif; color: #111111">Logiciel inconnu (1)</button>
+      </div>
+    </div>
+
+    <article style="border: 3px solid #111111; border-radius: 16px; background: #FFFFFF; box-shadow: 5px 5px 0 #111111; overflow: hidden">
+      <div style="display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: stretch">
+        <span aria-hidden="true" style="background: #B9AEFF; border-right: 2.5px solid #111111"></span>
+        <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 6px">
+          <p style="margin: 0; font-size: 13px; color: #3A3A3A"><strong style="color: #111111">Marie Dupont</strong> · Support · il y a 12 min · <a href="#">voir dans GitHub</a></p>
+          <p style="margin: 0; font-weight: 700; font-size: 19px">Le PDF du rapport Allamau sort avec les tableaux coupés</p>
+          <p style="margin: 0; font-size: 15px; color: #3A3A3A">« Quand j'exporte le rapport mensuel, les tableaux sortent coupés… » · 1 capture</p>
+          <p style="margin: 4px 0 0; padding: 8px 12px; border: 2px dashed #111111; border-radius: 10px; font-size: 14px; background: #FFF6CC">Ressemble à <strong>Export PDF : tableaux coupés</strong> (en test) · <a href="#">Fusionner</a></p>
+        </div>
+        <div style="padding: 16px 18px; display: flex; flex-direction: column; gap: 8px; justify-content: center; border-left: 2px solid #E2DDD3">
+          <label style="display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px">Type<select style="height: 34px; border: 2px solid #111111; border-radius: 8px; background: #FFFFFF"><option>Bug</option><option>Idée</option><option>Question</option></select></label>
+          <label style="display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px">Priorité<select style="height: 34px; border: 2px solid #111111; border-radius: 8px; background: #FFFFFF"><option>Haute</option><option>Normale</option><option>Basse</option></select></label>
+          <div style="display: flex; gap: 6px; margin-top: 4px">
+            <button style="height: 38px; padding: 0 14px; border: 2px solid #111111; border-radius: 10px; background: #FFE066; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Classer</button>
+            <button style="height: 38px; padding: 0 12px; border: 2px solid #111111; border-radius: 10px; background: #FFFFFF; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Transférer</button>
+          </div>
+        </div>
+      </div>
+      <div style="border-top: 2.5px solid #111111; padding: 14px 18px 14px 28px; background: #F9F7F3; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <label for="public-title" style="font-weight: 700; font-size: 14px">Titre public</label>
+        <input id="public-title" value="Rapports PDF lisibles sur les longs tableaux" style="flex: 1 1 320px; min-width: 0; height: 40px; box-sizing: border-box; border: 2px solid #111111; border-radius: 10px; padding: 0 12px; font: 15px 'Atkinson Hyperlegible', sans-serif; color: #111111">
+        <span style="font-size: 13px; color: #3A3A3A">Proposé automatiquement, à valider</span>
+      </div>
+    </article>
+
+    <article style="border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; overflow: hidden">
+      <span aria-hidden="true" style="background: #FF9A62; border-right: 2.5px solid #111111"></span>
+      <div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
+        <p style="margin: 0; font-size: 13px; color: #3A3A3A"><strong style="color: #111111">Karim B.</strong> · Ops · il y a 1 h</p>
+        <p style="margin: 0; font-weight: 700; font-size: 18px">Pouvoir bloquer une table pour un événement privé</p>
+      </div>
+      <div style="padding: 14px 18px; display: flex; gap: 6px; align-items: center">
+        <span style="padding: 5px 10px; border: 2px solid #111111; border-radius: 999px; font-size: 13px; font-weight: 700">Idée</span>
+        <button style="height: 38px; padding: 0 14px; border: 2px solid #111111; border-radius: 10px; background: #FFE066; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Classer</button>
+      </div>
+    </article>
+
+    <article style="border: 2.5px dashed #111111; border-radius: 16px; background: #FFFFFF; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; overflow: hidden">
+      <span aria-hidden="true" style="background: repeating-linear-gradient(45deg, #111111 0 3px, #FFFFFF 3px 7px); border-right: 2.5px dashed #111111"></span>
+      <div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
+        <p style="margin: 0; font-size: 13px; color: #3A3A3A"><strong style="color: #111111">Sophie L.</strong> · Direction · il y a 3 h · logiciel non précisé</p>
+        <p style="margin: 0; font-weight: 700; font-size: 18px">Comment j'exporte la liste des clients actifs ?</p>
+      </div>
+      <div style="padding: 14px 18px; display: flex; gap: 6px; align-items: center">
+        <label style="position: absolute; left: -9999px" for="app-pick">Logiciel</label>
+        <select id="app-pick" style="height: 38px; border: 2px solid #111111; border-radius: 10px; background: #FFFFFF"><option>Choisir le logiciel</option><option>NovaMoon Ads</option><option>TableAgent</option><option>NovoAgent</option></select>
+        <button style="height: 38px; padding: 0 14px; border: 2px solid #111111; border-radius: 10px; background: #FFFFFF; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Répondre</button>
+      </div>
+    </article>
+    <article style="border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; overflow: hidden">
+      <span aria-hidden="true" style="background: #B9AEFF; border-right: 2.5px solid #111111"></span>
+      <div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
+        <p style="margin: 0; font-size: 13px; color: #3A3A3A"><strong style="color: #111111">Julie R.</strong> · Commercial · il y a 5 h</p>
+        <p style="margin: 0; font-weight: 700; font-size: 18px">Ajouter le logo du client sur le rapport</p>
+      </div>
+      <div style="padding: 14px 18px; display: flex; gap: 6px; align-items: center">
+        <span style="padding: 5px 10px; border: 2px solid #111111; border-radius: 999px; font-size: 13px; font-weight: 700">Idée</span>
+        <button style="height: 38px; padding: 0 14px; border: 2px solid #111111; border-radius: 10px; background: #FFE066; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Classer</button>
+      </div>
+    </article>
+    <article style="border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; overflow: hidden">
+      <span aria-hidden="true" style="background: #7FD8B6; border-right: 2.5px solid #111111"></span>
+      <div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
+        <p style="margin: 0; font-size: 13px; color: #3A3A3A"><strong style="color: #111111">Thomas G.</strong> · Support · hier</p>
+        <p style="margin: 0; font-weight: 700; font-size: 18px">L'agent raccroche quand le client parle trop vite</p>
+      </div>
+      <div style="padding: 14px 18px; display: flex; gap: 6px; align-items: center">
+        <span style="padding: 5px 10px; border: 2px solid #111111; border-radius: 999px; font-size: 13px; font-weight: 700">Bug</span>
+        <button style="height: 38px; padding: 0 14px; border: 2px solid #111111; border-radius: 10px; background: #FFE066; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Classer</button>
+      </div>
+    </article>
+    <article style="border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; overflow: hidden">
+      <span aria-hidden="true" style="background: #FF9A62; border-right: 2.5px solid #111111"></span>
+      <div style="padding: 14px 18px; display: flex; flex-direction: column; gap: 4px">
+        <p style="margin: 0; font-size: 13px; color: #3A3A3A"><strong style="color: #111111">Karim B.</strong> · Ops · hier</p>
+        <p style="margin: 0; font-weight: 700; font-size: 18px">Exporter les réservations de la semaine</p>
+      </div>
+      <div style="padding: 14px 18px; display: flex; gap: 6px; align-items: center">
+        <span style="padding: 5px 10px; border: 2px solid #111111; border-radius: 999px; font-size: 13px; font-weight: 700">Idée</span>
+        <button style="height: 38px; padding: 0 14px; border: 2px solid #111111; border-radius: 10px; background: #FFE066; font: 700 14px 'Atkinson Hyperlegible', sans-serif; color: #111111">Classer</button>
+      </div>
+    </article>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":860}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

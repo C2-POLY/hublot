@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hublot, open source website</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap">
+<style>
+body{margin:0;background:#F4F1EC}
+a{color:#111111}a:hover{color:#3A3A3A}
+</style>
+</helmet>
+<div style="width: 100%; box-sizing: border-box; background: #F4F1EC; font-family: 'Atkinson Hyperlegible', system-ui, sans-serif; color: #111111">
+
+  <header style="background: #FFFFFF; border-bottom: 3px solid #111111">
+    <div style="max-width: 1320px; margin: 0 auto; padding: 16px 28px; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; gap: 18px">
+      <a href="#" style="display: flex; align-items: center; gap: 9px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px; letter-spacing: -0.02em; text-decoration: none"><svg aria-hidden="true" width="34" height="34" viewBox="-20 -20 40 40"><circle r="18" fill="#ECE7DD" stroke="#111111" stroke-width="2.5"></circle><circle r="11" fill="#FFE066" stroke="#111111" stroke-width="2.5"></circle><g fill="#111111"><circle cx="0" cy="-14.5" r="1.6"></circle><circle cx="0" cy="14.5" r="1.6"></circle><circle cx="-14.5" cy="0" r="1.6"></circle><circle cx="14.5" cy="0" r="1.6"></circle><circle cx="10.3" cy="-10.3" r="1.6"></circle><circle cx="-10.3" cy="10.3" r="1.6"></circle><circle cx="-10.3" cy="-10.3" r="1.6"></circle><circle cx="10.3" cy="10.3" r="1.6"></circle></g></svg>hublot</a>
+      <nav aria-label="Site navigation" style="display: flex; flex-wrap: wrap; gap: 4px; flex: 1 1 auto">
+        <a href="#comment" style="padding: 10px 14px; text-decoration: none; font-weight: 700; font-size: 15px">How it works</a>
+        <a href="#fonctions" style="padding: 10px 14px; text-decoration: none; font-weight: 700; font-size: 15px">Features</a>
+        <a href="#claude" style="padding: 10px 14px; text-decoration: none; font-weight: 700; font-size: 15px">With Claude</a>
+        <a href="#heberger" style="padding: 10px 14px; text-decoration: none; font-weight: 700; font-size: 15px">Self-hosting</a>
+        <a href="#faq" style="padding: 10px 14px; text-decoration: none; font-weight: 700; font-size: 15px">FAQ</a>
+      </nav>
+      <span style="display: inline-flex; border: 2.5px solid #111111; border-radius: 10px; overflow: hidden; font-weight: 700; font-size: 14px"><a href="Site.dc.html" hreflang="fr" lang="fr" style="padding: 8px 10px; text-decoration: none">FR</a><span aria-current="true" style="padding: 8px 10px; background: #111111; color: #FFFFFF">EN</span></span>
+      <a href="#" style="height: 46px; box-sizing: border-box; padding: 0 16px; border: 2.5px solid #111111; border-radius: 12px; background: #FFFFFF; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center; gap: 8px"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="#111111"><path d="M12 1.5a10.5 10.5 0 00-3.3 20.5c.5.1.7-.2.7-.5v-1.8c-2.9.6-3.5-1.4-3.5-1.4-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.7.1-.7 1 .1 1.6 1.1 1.6 1.1.9 1.6 2.5 1.2 3.1.9.1-.7.4-1.2.7-1.4-2.3-.3-4.8-1.2-4.8-5.1 0-1.1.4-2 1.1-2.8-.1-.3-.5-1.3.1-2.8 0 0 .9-.3 2.9 1.1a10 10 0 015.2 0c2-1.4 2.9-1.1 2.9-1.1.6 1.5.2 2.5.1 2.8.7.8 1.1 1.7 1.1 2.8 0 4-2.5 4.8-4.8 5.1.4.3.7 1 .7 2v2.9c0 .3.2.6.7.5A10.5 10.5 0 0012 1.5z"></path></svg>GitHub</a>
+      <a href="#heberger" style="height: 46px; box-sizing: border-box; padding: 0 18px; border: 3px solid #111111; border-radius: 12px; background: #FFE066; box-shadow: 3px 3px 0 #111111; text-decoration: none; font-weight: 700; font-size: 15px; display: inline-flex; align-items: center">Install</a>
+    </div>
+  </header>
+
+  <section style="max-width: 1320px; margin: 0 auto; padding: 48px 28px 0; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 28px">
+    <div style="flex: 1 1 700px; min-width: 0; display: flex; flex-direction: column; gap: 18px">
+      <span style="align-self: flex-start; padding: 7px 14px; border: 2.5px solid #111111; border-radius: 999px; background: #7FD8B6; font-weight: 700; font-size: 14px">Open source · AGPL-3.0</span>
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 70px; line-height: 0.92; letter-spacing: -0.04em">Every project travels its own way. Everyone looks through the same porthole.</h1>
+      <p style="margin: 0; font-size: 21px; line-height: 1.5; max-width: 720px">One product, one vehicle, one colour. Your team follows every journey without a GitHub account, while GitHub stays at the controls.</p>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 12px">
+      <a href="#" style="height: 60px; box-sizing: border-box; padding: 0 26px; border: 3px solid #111111; border-radius: 16px; background: #FFE066; box-shadow: 5px 5px 0 #111111; text-decoration: none; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 20px; display: inline-flex; align-items: center">Get on board</a>
+      <a href="#" style="height: 60px; box-sizing: border-box; padding: 0 24px; border: 3px solid #111111; border-radius: 16px; background: #111111; color: #FFFFFF; text-decoration: none; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 20px; display: inline-flex; align-items: center">See the demo</a>
+    </div>
+  </section>
+
+  <section style="max-width: 1320px; margin: 0 auto; padding: 36px 28px 56px; box-sizing: border-box">
+    <svg role="img" aria-label="A landscape: a ship on the sea with a submarine below, a train on land, a plane in the sky, and on the right a rocket lifting off. They all carry the same riveted round porthole, each in its project's colour." viewBox="0 0 1400 560" width="100%" style="display: block; border: 3px solid #111111; border-radius: 28px; box-shadow: 8px 8px 0 #111111; background: #A8DBFF">
+      <defs>
+        <symbol id="hub" viewBox="-20 -20 40 40">
+          <circle r="18" fill="#ECE7DD" stroke="#111111" stroke-width="2.5"></circle>
+          <circle r="11" fill="currentColor" stroke="#111111" stroke-width="2.5"></circle>
+          <path d="M-6-4a7 7 0 016-4" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" fill="none"></path>
+          <g fill="#111111"><circle cx="0" cy="-14.5" r="1.6"></circle><circle cx="0" cy="14.5" r="1.6"></circle><circle cx="-14.5" cy="0" r="1.6"></circle><circle cx="14.5" cy="0" r="1.6"></circle><circle cx="10.3" cy="-10.3" r="1.6"></circle><circle cx="-10.3" cy="10.3" r="1.6"></circle><circle cx="-10.3" cy="-10.3" r="1.6"></circle><circle cx="10.3" cy="10.3" r="1.6"></circle></g>
+        </symbol>
+        <clipPath id="frame"><rect x="0" y="0" width="1400" height="560" rx="26"></rect></clipPath>
+      </defs>
+      <g clip-path="url(#frame)">
+        <path d="M60 90h70a18 18 0 000-36a24 24 0 00-46 4a16 16 0 00-24 32z" fill="#FFFFFF" stroke="#111111" stroke-width="3"></path>
+        <path d="M940 120h80a18 18 0 000-36a26 26 0 00-50 4a18 18 0 00-30 32z" fill="#FFFFFF" stroke="#111111" stroke-width="3"></path>
+        <circle cx="380" cy="80" r="34" fill="#FFE066" stroke="#111111" stroke-width="3.5"></circle>
+
+        <path d="M140 300C330 160 640 120 900 150S1120 200 1170 170" stroke="#111111" stroke-width="3" stroke-dasharray="3 12" stroke-linecap="round" fill="none"></path>
+
+        <rect x="-10" y="370" width="440" height="200" fill="#6FB6E8" stroke="#111111" stroke-width="3"></rect>
+        <path d="M30 400q15-8 30 0t30 0M250 420q15-8 30 0t30 0M90 520q15-8 30 0t30 0" stroke="#111111" stroke-width="3" fill="none" stroke-linecap="round"></path>
+        <rect x="430" y="370" width="980" height="200" fill="#7FD8B6" stroke="#111111" stroke-width="3"></rect>
+
+        <g stroke="#111111" stroke-width="3.5" stroke-linejoin="round">
+          <rect x="196" y="236" width="28" height="44" fill="#FFE066"></rect>
+          <rect x="196" y="244" width="28" height="9" fill="#111111"></rect>
+          <rect x="130" y="272" width="170" height="44" rx="6" fill="#FFFFFF"></rect>
+          <rect x="160" y="250" width="100" height="26" rx="6" fill="#FFFFFF"></rect>
+          <path d="M60 314H360L332 372H92Z" fill="#B9AEFF"></path>
+        </g>
+        <use href="#hub" x="146" y="276" width="36" height="36" style="color: #B9AEFF"></use>
+        <use href="#hub" x="198" y="276" width="36" height="36" style="color: #B9AEFF"></use>
+        <use href="#hub" x="250" y="276" width="36" height="36" style="color: #B9AEFF"></use>
+
+        <g stroke="#111111" stroke-width="3.5" stroke-linejoin="round">
+          <path d="M226 446v-34h10" fill="none"></path>
+          <rect x="196" y="440" width="54" height="30" rx="8" fill="#FFE066"></rect>
+          <rect x="110" y="462" width="230" height="64" rx="32" fill="#FFE066"></rect>
+          <path d="M100 494l-22-18v36z" fill="#FF9A62"></path>
+        </g>
+        <use href="#hub" x="146" y="474" width="40" height="40" style="color: #7FD8B6"></use>
+        <use href="#hub" x="204" y="474" width="40" height="40" style="color: #7FD8B6"></use>
+        <use href="#hub" x="262" y="474" width="40" height="40" style="color: #7FD8B6"></use>
+        <g fill="#FFFFFF" stroke="#111111" stroke-width="2"><circle cx="360" cy="470" r="6"></circle><circle cx="374" cy="448" r="4"></circle></g>
+
+        <path d="M450 384H900" stroke="#111111" stroke-width="4"></path>
+        <path d="M470 384v10M500 384v10M530 384v10M560 384v10M590 384v10M620 384v10M650 384v10M680 384v10M710 384v10M740 384v10M770 384v10M800 384v10M830 384v10M860 384v10" stroke="#111111" stroke-width="3"></path>
+        <g stroke="#111111" stroke-width="3.5" stroke-linejoin="round">
+          <rect x="470" y="300" width="180" height="70" rx="12" fill="#FFFFFF"></rect>
+          <path d="M664 300H800Q870 300 884 370H664Z" fill="#FFFFFF"></path>
+          <rect x="470" y="346" width="180" height="10" fill="#FF9A62"></rect>
+          <rect x="664" y="346" width="214" height="10" fill="#FF9A62"></rect>
+          <path d="M650 336h14" fill="none"></path>
+          <g fill="#111111"><circle cx="500" cy="376" r="9"></circle><circle cx="620" cy="376" r="9"></circle><circle cx="700" cy="376" r="9"></circle><circle cx="830" cy="376" r="9"></circle></g>
+        </g>
+        <use href="#hub" x="490" y="306" width="36" height="36" style="color: #FF9A62"></use>
+        <use href="#hub" x="542" y="306" width="36" height="36" style="color: #FF9A62"></use>
+        <use href="#hub" x="594" y="306" width="36" height="36" style="color: #FF9A62"></use>
+        <use href="#hub" x="684" y="306" width="36" height="36" style="color: #FF9A62"></use>
+        <use href="#hub" x="736" y="306" width="36" height="36" style="color: #FF9A62"></use>
+
+        <g transform="translate(560 120) scale(1.7)" stroke="#111111" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M30 42L18 10h22l22 28z" fill="#FFB3D1"></path>
+          <path d="M22 46c0-10 18-14 44-14h106c20 0 34 8 38 16-4 8-18 12-38 12H66c-26 0-44-4-44-14z" fill="#FFFFFF"></path>
+          <path d="M100 52l28 28h18l-20-28z" fill="#FFB3D1"></path>
+          <path d="M188 40l12 4-4 3-10-1z" fill="#111111"></path>
+        </g>
+        <use href="#hub" x="684" y="183" width="28" height="28" style="color: #FFB3D1"></use>
+        <use href="#hub" x="718" y="183" width="28" height="28" style="color: #FFB3D1"></use>
+        <use href="#hub" x="752" y="183" width="28" height="28" style="color: #FFB3D1"></use>
+        <use href="#hub" x="786" y="183" width="28" height="28" style="color: #FFB3D1"></use>
+        <use href="#hub" x="820" y="183" width="28" height="28" style="color: #FFB3D1"></use>
+
+        <g stroke="#111111" stroke-width="3.5" stroke-linejoin="round">
+          <path d="M1060 520V160M1100 520V160M1060 200l40 40M1100 200l-40 40M1060 280l40 40M1100 280l-40 40M1060 360l40 40M1100 360l-40 40M1100 230h40" fill="none"></path>
+          <rect x="1130" y="470" width="180" height="30" rx="4" fill="#6E7179"></rect>
+          <path d="M1168 408C1150 440 1196 470 1190 520C1218 486 1222 440 1214 408Z" fill="#FF9A62"></path>
+          <path d="M1182 408C1176 430 1200 452 1196 482C1210 460 1212 432 1206 408Z" fill="#FFE066"></path>
+          <path d="M1140 330L1112 392H1146Z" fill="#FF9A62"></path>
+          <path d="M1240 330L1268 392H1234Z" fill="#FF9A62"></path>
+          <path d="M1190 70C1232 104 1246 160 1246 220V404H1134V220C1134 160 1148 104 1190 70Z" fill="#FFFFFF"></path>
+          <path d="M1162 108C1170 92 1180 80 1190 70C1200 80 1210 92 1218 108Z" fill="#B9AEFF"></path>
+          <rect x="1134" y="372" width="112" height="32" fill="#111111"></rect>
+          <path d="M1190 404v28" fill="none"></path>
+        </g>
+        <use href="#hub" x="1150" y="190" width="80" height="80" style="color: #FFE066"></use>
+        <g fill="#FFFFFF" stroke="#111111" stroke-width="3"><circle cx="1130" cy="512" r="24"></circle><circle cx="1166" cy="526" r="26"></circle><circle cx="1214" cy="526" r="26"></circle><circle cx="1254" cy="512" r="24"></circle><circle cx="1290" cy="526" r="20"></circle></g>
+        <path d="M1278 110v40M1296 140v50M1100 120v36" stroke="#111111" stroke-width="3" stroke-linecap="round"></path>
+      </g>
+
+      <g font-family="Atkinson Hyperlegible, sans-serif" font-weight="700" font-size="17">
+        <rect x="104" y="190" width="164" height="34" rx="17" fill="#B9AEFF" stroke="#111111" stroke-width="3"></rect><text x="186" y="213" text-anchor="middle" fill="#111111">Online shop</text>
+        <rect x="350" y="486" width="118" height="34" rx="17" fill="#7FD8B6" stroke="#111111" stroke-width="3"></rect><text x="409" y="509" text-anchor="middle" fill="#111111">Mobile app</text>
+        <rect x="550" y="410" width="138" height="34" rx="17" fill="#FF9A62" stroke="#111111" stroke-width="3"></rect><text x="619" y="433" text-anchor="middle" fill="#111111">Internal tool</text>
+        <rect x="600" y="70" width="124" height="34" rx="17" fill="#FFB3D1" stroke="#111111" stroke-width="3"></rect><text x="662" y="93" text-anchor="middle" fill="#111111">Website</text>
+        <rect x="1132" y="20" width="188" height="38" rx="19" fill="#FFE066" stroke="#111111" stroke-width="3"></rect><text x="1226" y="45" text-anchor="middle" fill="#111111">Your company</text>
+      </g>
+    </svg>
+  </section>
+
+  <section style="background: #111111; color: #FFFFFF; border-top: 3px solid #111111; border-bottom: 3px solid #111111">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 56px 28px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 40px; align-items: center">
+      <div style="flex: 1 1 380px; min-width: 0">
+        <h2 style="margin: 0 0 12px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 46px; line-height: 1; color: #FFE066">One tool less, not one more.</h2>
+        <p style="margin: 0; font-size: 18px; line-height: 1.55; color: #E6E6E6">Tracker, ideas board, helpdesk, roadmap, changelog: each one copies part of what GitHub already does. Hublot makes GitHub readable by everyone instead of duplicating it.</p>
+      </div>
+      <div style="flex: 1 1 520px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 12px">
+        <span style="padding: 12px 16px; border: 2.5px solid #6E6E6E; border-radius: 12px; color: #BDBDBD; text-decoration: line-through; font-weight: 700">Tracker</span>
+        <span style="padding: 12px 16px; border: 2.5px solid #6E6E6E; border-radius: 12px; color: #BDBDBD; text-decoration: line-through; font-weight: 700">Ideas board</span>
+        <span style="padding: 12px 16px; border: 2.5px solid #6E6E6E; border-radius: 12px; color: #BDBDBD; text-decoration: line-through; font-weight: 700">Helpdesk</span>
+        <span style="padding: 12px 16px; border: 2.5px solid #6E6E6E; border-radius: 12px; color: #BDBDBD; text-decoration: line-through; font-weight: 700">Public roadmap</span>
+        <span style="padding: 12px 16px; border: 2.5px solid #6E6E6E; border-radius: 12px; color: #BDBDBD; text-decoration: line-through; font-weight: 700">Changelog</span>
+        <span aria-hidden="true" style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 34px; color: #FFE066; padding: 0 6px">=</span>
+        <span style="padding: 12px 16px; border: 3px solid #FFFFFF; border-radius: 12px; background: #FFFFFF; color: #111111; font-weight: 700">GitHub</span>
+        <span aria-hidden="true" style="font-weight: 800; font-size: 24px">+</span>
+        <span style="padding: 12px 16px; border: 3px solid #FFE066; border-radius: 12px; background: #FFE066; color: #111111; font-weight: 700">Hublot</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="comment" style="max-width: 1240px; margin: 0 auto; padding: 72px 28px; box-sizing: border-box">
+    <h2 style="margin: 0 0 28px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 52px; line-height: 1; letter-spacing: -0.03em">How it works</h2>
+    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px">
+      <article style="padding: 22px; border: 3px solid #111111; border-radius: 20px; background: #B9AEFF; display: flex; flex-direction: column; gap: 12px"><span style="width: 52px; height: 52px; border: 3px solid #111111; border-radius: 14px; background: #FFFFFF; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px; display: flex; align-items: center; justify-content: center">1</span><h3 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px">Connect GitHub</h3><p style="margin: 0; font-size: 17px; line-height: 1.5">Install the GitHub app on your organisation and pick the repositories of your products.</p></article>
+      <article style="padding: 22px; border: 3px solid #111111; border-radius: 20px; background: #FF9A62; display: flex; flex-direction: column; gap: 12px"><span style="width: 52px; height: 52px; border: 3px solid #111111; border-radius: 14px; background: #FFFFFF; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px; display: flex; align-items: center; justify-content: center">2</span><h3 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px">Invite your team</h3><p style="margin: 0; font-size: 17px; line-height: 1.5">Everyone signs in with their work e-mail and a magic link. No GitHub account, no password.</p></article>
+      <article style="padding: 22px; border: 3px solid #111111; border-radius: 20px; background: #7FD8B6; display: flex; flex-direction: column; gap: 12px"><span style="width: 52px; height: 52px; border: 3px solid #111111; border-radius: 14px; background: #FFFFFF; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px; display: flex; align-items: center; justify-content: center">3</span><h3 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px">Track it like a parcel</h3><p style="margin: 0; font-size: 17px; line-height: 1.5">Received, planned, in progress, in testing, shipped. Every step comes from GitHub, with nothing typed twice.</p></article>
+    </div>
+  </section>
+
+  <section style="max-width: 1240px; margin: 0 auto; padding: 0 28px 72px; box-sizing: border-box; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px">
+    <article style="padding: 28px; border: 3px solid #111111; border-radius: 22px; background: #FFFFFF; box-shadow: 6px 6px 0 #111111">
+      <h3 style="margin: 0 0 16px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 32px">For your team</h3>
+      <ul style="margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 10px; font-size: 18px; line-height: 1.45">
+        <li>A request in two minutes, guided, from a computer or a phone.</li>
+        <li>An annotated screenshot, pasted or taken on the spot.</li>
+        <li>“Me too” instead of a duplicate.</li>
+        <li>What's new, explained in plain words.</li>
+      </ul>
+    </article>
+    <article style="padding: 28px; border: 3px solid #111111; border-radius: 22px; background: #111111; color: #FFFFFF; box-shadow: 6px 6px 0 #FFE066">
+      <h3 style="margin: 0 0 16px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 32px; color: #FFE066">For developers</h3>
+      <ul style="margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 10px; font-size: 18px; line-height: 1.45">
+        <li>Nothing changes: issues, sub-issues, PRs, deployments.</li>
+        <li>Complete issues, with acceptance criteria and a way to verify.</li>
+        <li>Ready to hand over to a coding agent.</li>
+        <li>Triage for every repository in one place.</li>
+      </ul>
+    </article>
+  </section>
+
+  <section id="fonctions" style="background: #FFFFFF; border-top: 3px solid #111111; border-bottom: 3px solid #111111">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 72px 28px; box-sizing: border-box">
+      <h2 style="margin: 0 0 28px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 52px; line-height: 1; letter-spacing: -0.03em">What you get</h2>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px">
+        <article style="padding: 20px; border: 2.5px solid #111111; border-radius: 18px; background: #F4F1EC"><h3 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">All your products</h3><p style="margin: 0; font-size: 16px; line-height: 1.5">One repository and one colour per product, a single way in.</p></article>
+        <article style="padding: 20px; border: 2.5px solid #111111; border-radius: 18px; background: #F4F1EC"><h3 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">Access per product</h3><p style="margin: 0; font-size: 16px; line-height: 1.5">Viewer, reporter, triager, manager: everyone sees what concerns them, nothing more.</p></article>
+        <article style="padding: 20px; border: 2.5px solid #111111; border-radius: 18px; background: #F4F1EC"><h3 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">Guided creation</h3><p style="margin: 0; font-size: 16px; line-height: 1.5">Features and issues filled in field by field, with a “ready” gauge.</p></article>
+        <article style="padding: 20px; border: 2.5px solid #111111; border-radius: 18px; background: #F4F1EC"><h3 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">What's coming</h3><p style="margin: 0; font-size: 16px; line-height: 1.5">A Now, Next, Later roadmap that everyone can read and vote on.</p></article>
+        <article style="padding: 20px; border: 2.5px solid #111111; border-radius: 18px; background: #F4F1EC"><h3 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">“Shipped” for real</h3><p style="margin: 0; font-size: 16px; line-height: 1.5">The final status is read from your GitHub deployments, not from a box someone ticked.</p></article>
+        <article style="padding: 20px; border: 2.5px solid #111111; border-radius: 18px; background: #F4F1EC"><h3 style="margin: 0 0 8px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 22px">E-mails people actually read</h3><p style="margin: 0; font-size: 16px; line-height: 1.5">One sentence, one button. Everyone chooses what they receive.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width: 1240px; margin: 0 auto; padding: 72px 28px; box-sizing: border-box">
+    <h2 style="margin: 0 0 10px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 52px; line-height: 1; letter-spacing: -0.03em">GitHub stays the source of truth</h2>
+    <p style="margin: 0 0 30px; font-size: 19px; line-height: 1.5; max-width: 760px">Hublot keeps none of your tasks, statuses or priorities: everything lives in GitHub. Remove Hublot tomorrow and you lose nothing.</p>
+    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 16px">
+      <div style="flex: 1 1 220px; padding: 22px; border: 3px solid #111111; border-radius: 20px; background: #FF9A62"><p style="margin: 0 0 6px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 24px">Your team</p><p style="margin: 0; font-size: 15px">Submits, follows, votes, comments</p></div>
+      <svg aria-hidden="true" width="60" height="24" viewBox="0 0 60 24" fill="none" stroke="#111111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h50M44 4l9 8-9 8"></path></svg>
+      <div style="flex: 1 1 220px; padding: 22px; border: 3px solid #111111; border-radius: 20px; background: #FFE066; box-shadow: 6px 6px 0 #111111"><p style="margin: 0 0 6px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 24px">Hublot</p><p style="margin: 0; font-size: 15px">Translates, guides, filters access</p></div>
+      <svg aria-hidden="true" width="60" height="24" viewBox="0 0 60 24" fill="none" stroke="#111111" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h50M44 4l9 8-9 8"></path></svg>
+      <div style="flex: 1 1 260px; padding: 22px; border: 3px solid #111111; border-radius: 20px; background: #111111; color: #FFFFFF"><p style="margin: 0 0 6px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 24px">GitHub</p><p style="margin: 0; font-size: 15px; color: #E6E6E6">Issues, sub-issues, fields, Projects, deployments</p></div>
+    </div>
+  </section>
+
+  <section id="claude" style="background: #FFE066; border-top: 3px solid #111111">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 72px 28px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 40px; align-items: center">
+      <div style="flex: 1 1 440px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+        <span style="align-self: flex-start; padding: 7px 14px; border: 2.5px solid #111111; border-radius: 999px; background: #FFFFFF; font-weight: 700; font-size: 14px">Built-in MCP server</span>
+        <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 52px; line-height: 1; letter-spacing: -0.03em">One sentence to Claude, one feature ready.</h2>
+        <p style="margin: 0; font-size: 19px; line-height: 1.5">Hublot ships with an MCP server. Ask Claude for a feature: it arrives with all its issues, filled in with the same fields as guided creation, and checked before it enters GitHub.</p>
+        <ul style="margin: 0; padding: 0 0 0 20px; display: flex; flex-direction: column; gap: 8px; font-size: 17px; line-height: 1.45">
+          <li>Claude acts with your permissions, no more, no less.</li>
+          <li>Something missing? Hublot says so, and Claude asks you.</li>
+          <li>Drafts by default: nothing enters GitHub without your approval.</li>
+          <li>Every action is logged “via Claude”.</li>
+        </ul>
+      </div>
+      <div style="flex: 1 1 480px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+        <div style="border: 3px solid #111111; border-radius: 18px; background: #2E3036; color: #F4F1EC; box-shadow: 8px 8px 0 #111111; overflow: hidden">
+          <p style="margin: 0; padding: 10px 16px; border-bottom: 2px solid #4A4D55; color: #FFE066; font-size: 13px; font-weight: 700">terminal</p>
+          <pre style="margin: 0; padding: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 14px; line-height: 1.6; white-space: pre-wrap">claude mcp add --transport http hublot [YOUR INSTANCE]/mcp</pre>
+        </div>
+        <div style="padding: 18px; border: 3px solid #111111; border-radius: 18px; background: #FFFFFF; display: flex; flex-direction: column; gap: 12px">
+          <p style="margin: 0; padding: 12px 14px; border: 2.5px solid #111111; border-radius: 14px 14px 14px 4px; background: #F4F1EC; font-size: 16px; line-height: 1.45">“Create the Excel export of orders for the online shop, split into ready issues.”</p>
+          <div style="padding: 12px 14px; border: 2.5px solid #111111; border-radius: 14px; background: #B9AEFF; display: flex; flex-direction: column; gap: 8px">
+            <strong style="font-size: 16px">Excel export of orders</strong>
+            <span style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 13px; font-weight: 700"><span style="padding: 3px 9px; border: 2px solid #111111; border-radius: 999px; background: #7FD8B6">4 issues</span><span style="padding: 3px 9px; border: 2px solid #111111; border-radius: 999px; background: #7FD8B6">4 of 4 ready</span><span style="padding: 3px 9px; border: 2px solid #111111; border-radius: 999px; background: #FFFFFF">draft</span></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="heberger" style="background: #B9AEFF; border-top: 3px solid #111111; border-bottom: 3px solid #111111">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 72px 28px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 40px; align-items: center">
+      <div style="flex: 1 1 420px; min-width: 0">
+        <h2 style="margin: 0 0 14px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 52px; line-height: 1; letter-spacing: -0.03em">On your server, in one command</h2>
+        <p style="margin: 0 0 18px; font-size: 19px; line-height: 1.5">One Docker image, a Postgres database, S3-compatible storage for screenshots. Your data never leaves your server.</p>
+        <p style="margin: 0; font-size: 16px; font-weight: 700">The setup wizard creates the GitHub app for you.</p>
+      </div>
+      <div style="flex: 1 1 460px; min-width: 0; border: 3px solid #111111; border-radius: 18px; background: #2E3036; box-shadow: 8px 8px 0 #111111; overflow: hidden">
+        <p style="margin: 0; padding: 10px 16px; border-bottom: 2px solid #4A4D55; color: #FFE066; font-size: 13px; font-weight: 700">terminal</p>
+        <pre style="margin: 0; padding: 18px 16px; font-family: 'IBM Plex Mono', monospace; font-size: 15px; line-height: 1.7; color: #F4F1EC; white-space: pre-wrap">git clone [REPOSITORY URL]
+cd hublot
+cp .env.example .env
+docker compose up -d</pre>
+      </div>
+    </div>
+  </section>
+
+  <section style="max-width: 1240px; margin: 0 auto; padding: 72px 28px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 24px; align-items: stretch">
+    <div style="flex: 1 1 420px; min-width: 0; padding: 28px; border: 3px solid #111111; border-radius: 22px; background: #7FD8B6; display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 40px; line-height: 1">Free, for real</h2>
+      <p style="margin: 0; font-size: 18px; line-height: 1.5">Released under the AGPL-3.0 licence. Use it, change it, host it. If you run it as a service, share your improvements.</p>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: auto">
+        <a href="#" style="height: 50px; box-sizing: border-box; padding: 0 18px; border: 3px solid #111111; border-radius: 14px; background: #111111; color: #FFFFFF; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center">Code on GitHub</a>
+        <a href="#" style="height: 50px; box-sizing: border-box; padding: 0 18px; border: 3px solid #111111; border-radius: 14px; background: #FFFFFF; text-decoration: none; font-weight: 700; display: inline-flex; align-items: center">Contribute</a>
+      </div>
+    </div>
+    <div style="flex: 1 1 420px; min-width: 0; padding: 28px; border: 3px solid #111111; border-radius: 22px; background: #FFFFFF; display: flex; flex-direction: column; gap: 14px">
+      <h2 style="margin: 0; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 40px; line-height: 1">Born from a real need</h2>
+      <p style="margin: 0; font-size: 18px; line-height: 1.5">Hublot is published by ET Technology Consulting, built to run several products with teams who are not developers, without piling up tools.</p>
+      <a href="#" style="margin-top: auto; font-weight: 700">Get in touch</a>
+    </div>
+  </section>
+
+  <section id="faq" style="max-width: 1240px; margin: 0 auto; padding: 0 28px 72px; box-sizing: border-box">
+    <h2 style="margin: 0 0 22px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 52px; line-height: 1; letter-spacing: -0.03em">Questions</h2>
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px">
+      <details open style="padding: 18px 20px; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF"><summary style="font-weight: 700; font-size: 18px; cursor: pointer">Do my colleagues need a GitHub account?</summary><p style="margin: 10px 0 0; font-size: 16px; line-height: 1.5">No. They sign in with their work e-mail. Only developers use GitHub.</p></details>
+      <details open style="padding: 18px 20px; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF"><summary style="font-weight: 700; font-size: 18px; cursor: pointer">Can they see our code?</summary><p style="margin: 10px 0 0; font-size: 16px; line-height: 1.5">No. They only see requests for the products you give them access to.</p></details>
+      <details style="padding: 18px 20px; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF"><summary style="font-weight: 700; font-size: 18px; cursor: pointer">What happens if we stop using Hublot?</summary><p style="margin: 10px 0 0; font-size: 16px; line-height: 1.5">Nothing is lost: everything is already in GitHub.</p></details>
+      <details style="padding: 18px 20px; border: 2.5px solid #111111; border-radius: 16px; background: #FFFFFF"><summary style="font-weight: 700; font-size: 18px; cursor: pointer">Is there a hosted version?</summary><p style="margin: 10px 0 0; font-size: 16px; line-height: 1.5">[TO BE DECIDED]</p></details>
+    </div>
+  </section>
+
+  <footer style="background: #111111; color: #FFFFFF; border-top: 3px solid #111111">
+    <div style="max-width: 1240px; margin: 0 auto; padding: 40px 28px; box-sizing: border-box; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 20px">
+      <span style="display: flex; align-items: center; gap: 9px; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 24px"><svg aria-hidden="true" width="30" height="30" viewBox="-20 -20 40 40"><circle r="18" fill="#ECE7DD" stroke="#111111" stroke-width="2.5"></circle><circle r="11" fill="#FFE066" stroke="#111111" stroke-width="2.5"></circle><g fill="#111111"><circle cx="0" cy="-14.5" r="1.6"></circle><circle cx="0" cy="14.5" r="1.6"></circle><circle cx="-14.5" cy="0" r="1.6"></circle><circle cx="14.5" cy="0" r="1.6"></circle><circle cx="10.3" cy="-10.3" r="1.6"></circle><circle cx="-10.3" cy="10.3" r="1.6"></circle><circle cx="-10.3" cy="-10.3" r="1.6"></circle><circle cx="10.3" cy="10.3" r="1.6"></circle></g></svg>hublot</span>
+      <span style="font-size: 15px; color: #E6E6E6">AGPL-3.0 · an ET Technology Consulting project</span>
+      <nav aria-label="Footer links" style="display: flex; gap: 18px; font-size: 15px"><a href="#" style="color: #FFFFFF">Documentation</a><a href="#" style="color: #FFFFFF">GitHub</a><a href="#" style="color: #FFFFFF">Security</a><a href="#" style="color: #FFFFFF">Contact</a></nav>
+    </div>
+  </footer>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":4700}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

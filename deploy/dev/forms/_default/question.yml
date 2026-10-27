@@ -1,0 +1,11 @@
+name: Poser une question
+description: Je ne sais pas comment faire.
+labels: [question]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: Votre question
+      placeholder: Comment modifier l'horaire d'ouverture ?
+    validations:
+      required: true

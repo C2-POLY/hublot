@@ -1,0 +1,18 @@
+name: Proposer une idée
+description: Ce serait mieux si…
+labels: [idee]
+type: Feature
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: Votre idée
+      description: Ce qui changerait pour vous si c'était possible.
+      placeholder: Pouvoir dupliquer une réservation pour la semaine suivante.
+    validations:
+      required: true
+  - type: textarea
+    id: today
+    attributes:
+      label: Comment vous faites aujourd'hui ?
+      description: Facultatif, mais ça aide l'équipe à comprendre.

@@ -1,0 +1,169 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+@import 'tailwindcss';
+
+/* Franc identity (docs/HUBLOT-reprise.md §5). */
+@theme {
+  --color-page: #f4f1ec;
+  --color-surface: #ffffff;
+  --color-soft: #f9f7f3;
+  --color-ink: #111111;
+  --color-ink-2: #3a3a3a;
+  --color-accent: #ffe066;
+  --color-lavender: #b9aeff;
+  --color-orange: #ff9a62;
+  --color-mint: #7fd8b6;
+  --color-pink: #ffb3d1;
+  --color-sky: #a8dbff;
+  --color-sea: #6fb6e8;
+  --color-ring: #ece7dd;
+  --color-terminal: #2e3036;
+  --color-terminal-line: #4a4d55;
+  --color-notice: #fff6cc;
+
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-sans: 'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --shadow-hard-sm: 3px 3px 0 #111111;
+  --shadow-hard: 4px 4px 0 #111111;
+  --shadow-hard-md: 5px 5px 0 #111111;
+  --shadow-hard-lg: 6px 6px 0 #111111;
+  --shadow-hard-xl: 8px 8px 0 #111111;
+}
+
+@layer base {
+  html {
+    background: var(--color-page);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--color-page);
+  }
+  a {
+    color: var(--color-ink);
+  }
+  a:hover {
+    color: var(--color-ink-2);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+    border-radius: 6px;
+  }
+  button {
+    cursor: pointer;
+  }
+  button:disabled {
+    cursor: not-allowed;
+  }
+}
+
+@utility border-franc {
+  border: 2.5px solid var(--color-ink);
+}
+@utility border-franc-strong {
+  border: 3px solid var(--color-ink);
+}
+@utility border-franc-dashed {
+  border: 2.5px dashed var(--color-ink);
+}
+@utility sr-only-franc {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@layer components {
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    border: 3px solid var(--color-ink);
+    border-radius: 16px;
+    background: var(--color-accent);
+    box-shadow: var(--shadow-hard-md);
+    color: var(--color-ink);
+    font-family: var(--font-display);
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 80ms ease, box-shadow 80ms ease;
+  }
+  .btn-primary:hover:not(:disabled) {
+    color: var(--color-ink);
+    transform: translate(-1px, -1px);
+    box-shadow: 6px 6px 0 var(--color-ink);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 2px 2px 0 var(--color-ink);
+  }
+  .btn-primary:disabled {
+    opacity: 0.55;
+  }
+  .btn-dark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 3px solid var(--color-ink);
+    border-radius: 14px;
+    background: var(--color-ink);
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .btn-dark:hover {
+    color: #ffffff;
+  }
+  .btn-light {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2.5px solid var(--color-ink);
+    border-radius: 14px;
+    background: #ffffff;
+    color: var(--color-ink);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .field {
+    width: 100%;
+    box-sizing: border-box;
+    border: 2.5px solid var(--color-ink);
+    border-radius: 12px;
+    background: #ffffff;
+    padding: 0 14px;
+    font: 17px var(--font-sans);
+    color: var(--color-ink);
+  }
+  .field[aria-invalid='true'] {
+    border-color: #b3261e;
+    box-shadow: 3px 3px 0 #b3261e;
+  }
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 11px;
+    border: 2px solid var(--color-ink);
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+}

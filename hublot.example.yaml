@@ -1,0 +1,82 @@
+# Hublot configuration. ${VAR} references are read from the environment:
+# keep secrets there, not in this file.
+
+base_url: https://hublot.example.com
+listen: ":8080"
+database_url: ${HUBLOT_DATABASE_URL}
+# At least 32 random characters; signs the attachment links written in issues.
+# Generate one with: openssl rand -base64 48
+secret: ${HUBLOT_SECRET}
+# Read the client IP from X-Forwarded-For: only behind a reverse proxy that sets it.
+trust_proxy_headers: false
+# web_dir: web/dist  # serve the SPA from disk (binaries built without -tags embedweb)
+
+auth:
+  # Only these domains receive a sign-in link.
+  allowed_domains: [example.com]
+  # Become owner on their first sign-in. Leave empty once the first owner exists.
+  bootstrap_owners: [lead@example.com]
+
+mail:
+  driver: smtp          # smtp, or log to print e-mails (development only)
+  from: "Hublot <hublot@example.com>"
+  host: smtp.example.com
+  port: 587
+  username: ${HUBLOT_SMTP_USER}
+  password: ${HUBLOT_SMTP_PASSWORD}
+
+storage:
+  driver: s3            # s3, or fs for a single instance with a mounted volume
+  s3:
+    endpoint: s3.gra.io.cloud.ovh.net
+    region: gra
+    bucket: hublot-attachments
+    access_key: ${HUBLOT_S3_ACCESS_KEY}
+    secret_key: ${HUBLOT_S3_SECRET_KEY}
+    use_ssl: true
+attachments:
+  max_bytes: 10485760   # 10 MB
+
+forge:
+  driver: github
+  author_email: masked  # masked (m***@example.com), full or hidden in issue bodies
+  github:
+    app_id: ${HUBLOT_GITHUB_APP_ID}
+    installation_id: ${HUBLOT_GITHUB_INSTALLATION_ID}
+    private_key_path: /run/secrets/github-app.pem
+
+# Which issue form of the repository (.github/ISSUE_TEMPLATE/) each request kind uses.
+kinds:
+  problem: bug.yml
+  idea: idea.yml
+  question: question.yml
+
+# Each project ("logiciel") is one repository. Vehicles: boat, submarine, train,
+# plane, rocket, car, bus. Colours from the Franc palette.
+projects:
+  - slug: online-shop
+    name: Online shop
+    hint: The store customers buy from
+    color: "#B9AEFF"
+    vehicle: boat
+    repo: example-org/shop
+  - slug: mobile-app
+    name: Mobile app
+    hint: iOS and Android
+    color: "#FF9A62"
+    vehicle: plane
+    repo: example-org/mobile
+  - slug: internal-tool
+    name: Internal tool
+    hint: Back office
+    color: "#7FD8B6"
+    vehicle: train
+    repo: example-org/backoffice
+    reporters_see_all: true   # reporters see every request, not only theirs
+  - slug: feedback
+    name: I don't know
+    hint: The team sorts it out
+    color: "#FFFFFF"
+    vehicle: submarine
+    repo: example-org/feedback
+    inbox: true               # shown as the "I don't know" choice
