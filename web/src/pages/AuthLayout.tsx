@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Logo } from '../components/Emblem'
 import { Footer } from '../components/Footer'
+import { VoyageScene } from '../components/VoyageScene'
 
 /** Signed-out layout (C-Connexion): black brand panel on the left, the form on the right. */
 export function AuthLayout({ children }: { children: ReactNode }) {
@@ -18,12 +19,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             <Logo size={36} />
             {t('common.appName')}
           </span>
-          <div className="hidden max-w-[460px] grid-cols-2 gap-3.5 sm:grid">
-            <span className="h-[120px] rounded-[18px] border-[3px] border-white bg-lavender" />
-            <span className="h-[120px] translate-y-6 rounded-[18px] border-[3px] border-white bg-orange" />
-            <span className="h-[120px] rounded-[18px] border-[3px] border-white bg-mint" />
-            <span className="h-[120px] translate-y-6 rounded-full border-[3px] border-white bg-accent" />
-          </div>
+          <VoyageScene className="max-w-[640px] rounded-[24px] border-[3px] border-white" />
           <p className="m-0 max-w-[460px] font-display text-[30px] font-extrabold leading-none text-white sm:text-[38px]">
             {t('login.tagline')}
           </p>
