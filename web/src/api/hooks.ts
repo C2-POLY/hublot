@@ -30,3 +30,7 @@ export function useForms(slug: string | undefined) {
     staleTime: 5 * 60_000,
   })
 }
+
+export function useTriageInbox() {
+  return useQuery({ queryKey: ['triage'], queryFn: api.triageInbox, retry: noRetryOnClientError })
+}

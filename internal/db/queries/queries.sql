@@ -229,3 +229,19 @@ SELECT EXISTS (SELECT 1 FROM request_notification WHERE request_id = $1 AND stat
 
 -- name: RecordNotification :exec
 INSERT INTO request_notification (request_id, status) VALUES ($1, $2) ON CONFLICT DO NOTHING;
+
+-- name: ListTriageInbox :many
+-- Open requests nobody triaged yet (label portal:new) in the given projects:
+-- the inbox project first, then the newest.
+SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
+FROM request r
+JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
+JOIN app_user u ON u.id = r.author_id
+JOIN project p ON p.id = r.project_id
+WHERE r.project_id = ANY(@project_ids::uuid[]) AND c.state = 'open' AND c.deleted_at IS NULL
+  AND @label::text = ANY(c.labels)
+ORDER BY p.inbox DESC, r.created_at DESC
+LIMIT 200;
+
+-- name: SetRequestKind :exec
+UPDATE request SET kind = $2 WHERE id = $1;

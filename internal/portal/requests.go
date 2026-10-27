@@ -348,8 +348,8 @@ type row struct {
 	CreatedAt                                time.Time
 }
 
-func requestRow[T db.GetRequestRow | db.ListRequestsByAuthorRow | db.ListRequestsByProjectRow](r T) row {
-	// The three generated row types share the same fields.
+func requestRow[T db.GetRequestRow | db.ListRequestsByAuthorRow | db.ListRequestsByProjectRow | db.ListTriageInboxRow](r T) row {
+	// The generated row types share the same fields.
 	g := db.GetRequestRow(r)
 	return row{
 		ID: g.ID, ProjectID: g.ProjectID, OriginProjectID: g.OriginProjectID, AuthorID: g.AuthorID,

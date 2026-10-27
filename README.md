@@ -16,10 +16,11 @@ and [`docs/design/maquettes/`](docs/design/maquettes/). The HTTP API is in [`doc
 | Done | Next (milestone 2+) |
 |---|---|
 | Magic-link sign-in limited to allowed domains | Webhooks, cache refresh, full status lifecycle |
-| Per-project RBAC, groups, deny by default, isolation test suite | Triage inbox, notifications |
+| Per-project RBAC, groups, deny by default, isolation test suite | Notifications |
 | Request forms read from `.github/ISSUE_TEMPLATE/*.yml` | Roadmap, release notes, two-way comments |
 | Filing a request with attachments (fs or S3) | Guided feature/issue creation, MCP server |
 | SPA: sign-in, home, new request, my requests, tracking | Admin screens (access, settings), OIDC |
+| Triage inbox: accept, change kind, transfer, confidential, close (written to GitHub) | |
 
 ## Stack
 

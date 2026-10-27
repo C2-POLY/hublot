@@ -3,6 +3,7 @@
 package httpapi
 
 import (
+	"encoding/json"
 	"errors"
 	"io"
 	"mime"
@@ -84,12 +85,14 @@ type meView struct {
 	Lang     string               `json:"lang"`
 	OrgRole  string               `json:"orgRole"`
 	Projects []portal.ProjectView `json:"projects"`
+	// CanTriage shows the triage entry: the person may triage at least one project.
+	CanTriage bool `json:"canTriage"`
 }
 
 func (s *Server) meView(u db.AppUser, sub authz.Subject) meView {
 	return meView{
 		ID: u.ID, Email: u.Email, Name: u.Name, Lang: u.Lang, OrgRole: string(u.OrgRole),
-		Projects: s.Portal.VisibleProjects(sub),
+		Projects: s.Portal.VisibleProjects(sub), CanTriage: s.Portal.CanTriage(sub),
 	}
 }
 
@@ -175,6 +178,39 @@ func (s *Server) getRequest(w http.ResponseWriter, r *http.Request) {
 	v, err := s.Portal.GetRequest(r.Context(), subjectFrom(r), id)
 	if err != nil {
 		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, v)
+}
+
+func (s *Server) triageInbox(w http.ResponseWriter, r *http.Request) {
+	inbox, err := s.Portal.Inbox(r.Context(), subjectFrom(r))
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, inbox)
+}
+
+func (s *Server) triage(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r)
+	if !ok {
+		return
+	}
+	// The body is optional: accept needs none.
+	var in portal.TriageInput
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil && !errors.Is(err, io.EOF) {
+		writeError(w, http.StatusBadRequest, "bad_request", nil)
+		return
+	}
+	v, err := s.Portal.Triage(r.Context(), subjectFrom(r), id, chi.URLParam(r, "action"), in)
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	if v == nil {
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 	writeJSON(w, http.StatusOK, v)

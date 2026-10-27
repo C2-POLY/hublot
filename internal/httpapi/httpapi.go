@@ -78,6 +78,8 @@ func (s *Server) Handler() http.Handler {
 			r.Post("/requests", s.createRequest)
 			r.Get("/requests", s.listRequests)
 			r.Get("/requests/{id}", s.getRequest)
+			r.Get("/triage", s.triageInbox)
+			r.Post("/triage/{id}/{action}", s.triage)
 		})
 		r.NotFound(func(w http.ResponseWriter, _ *http.Request) { writeError(w, http.StatusNotFound, "not_found", nil) })
 	})

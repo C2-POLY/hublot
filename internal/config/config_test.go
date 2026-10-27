@@ -98,6 +98,22 @@ projects:
 	}
 }
 
+func TestIssueTypes(t *testing.T) {
+	c, err := Parse(minimal + "issue_types: {problem: Bug, idea: Feature, question: Question}\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.IssueTypes["idea"] != "Feature" {
+		t.Errorf("issue types: %v", c.IssueTypes)
+	}
+	_, err = Parse(minimal + "issue_types: {rant: Bug, idea: \"\"}\n")
+	for _, want := range []string{`issue_types: unknown kind "rant"`, "issue_types: idea needs a type name"} {
+		if err == nil || !strings.Contains(err.Error(), want) {
+			t.Errorf("missing %q in: %v", want, err)
+		}
+	}
+}
+
 func TestExpandOnlyExplicitReferences(t *testing.T) {
 	t.Setenv("HUBLOT_X", "value")
 	if got := expandEnv("a: ${HUBLOT_X}\nb: pa$word $HUBLOT_X"); got != "a: value\nb: pa$word $HUBLOT_X" {

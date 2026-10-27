@@ -37,8 +37,11 @@ type Config struct {
 	Forge       Forge       `yaml:"forge"`
 	Sync        Sync        `yaml:"sync"`
 	// Kinds maps each request kind (problem, idea, question) to an issue form file.
-	Kinds    map[string]string `yaml:"kinds"`
-	Projects []Project         `yaml:"projects"`
+	Kinds map[string]string `yaml:"kinds"`
+	// IssueTypes maps a request kind to the organisation issue type set when triage
+	// changes the kind (problem: Bug). Optional: without it, the new form's type is used.
+	IssueTypes map[string]string `yaml:"issue_types"`
+	Projects   []Project         `yaml:"projects"`
 }
 
 type Auth struct {
@@ -279,6 +282,14 @@ func (c *Config) validate() error {
 	for k := range c.Kinds {
 		if !slices.Contains(Kinds, k) {
 			errs = append(errs, fmt.Errorf("kinds: unknown kind %q", k))
+		}
+	}
+	for k, t := range c.IssueTypes {
+		if !slices.Contains(Kinds, k) {
+			errs = append(errs, fmt.Errorf("issue_types: unknown kind %q", k))
+		}
+		if strings.TrimSpace(t) == "" {
+			errs = append(errs, fmt.Errorf("issue_types: %s needs a type name", k))
 		}
 	}
 	seen := map[string]bool{}

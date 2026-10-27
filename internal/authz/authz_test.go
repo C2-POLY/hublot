@@ -125,6 +125,44 @@ func TestAdmins(t *testing.T) {
 	check(t, "member never audited", ViaOrgRoleOnly(member(nil), app.ID), false)
 }
 
+func TestTriage(t *testing.T) {
+	for role, want := range map[Role]bool{
+		RoleNone: false, RoleViewer: false, RoleReporter: false, RoleContributor: false, RoleTriager: true, RoleManager: true,
+	} {
+		s := member(map[uuid.UUID]Role{shop.ID: role})
+		check(t, role.String()+" inbox", Can(s, TriageProject, shop), want)
+		check(t, role.String()+" private request", Can(s, TriageRequest, req(shop, paul, true)), want)
+		check(t, role.String()+" own request", Can(s, TriageRequest, req(shop, marie, false)), want)
+	}
+	triager := member(map[uuid.UUID]Role{shop.ID: RoleTriager})
+	check(t, "inbox of another project", Can(triager, TriageProject, app), false)
+	for _, org := range []OrgRole{OrgOwner, OrgAdmin} {
+		check(t, string(org)+" inbox", Can(Subject{UserID: marie, Org: org}, TriageProject, app), true)
+	}
+	check(t, "triage action on a request resource only", Can(triager, TriageProject, req(shop, paul, false)), false)
+}
+
+func TestTransfer(t *testing.T) {
+	moving := req(shop, paul, false)
+	cases := []struct {
+		name  string
+		roles map[uuid.UUID]Role
+		want  bool
+	}{
+		{"triager on both", map[uuid.UUID]Role{shop.ID: RoleTriager, app.ID: RoleManager}, true},
+		{"triager on the source only", map[uuid.UUID]Role{shop.ID: RoleTriager, app.ID: RoleContributor}, false},
+		{"triager on the destination only", map[uuid.UUID]Role{shop.ID: RoleContributor, app.ID: RoleTriager}, false},
+		{"no role on the destination", map[uuid.UUID]Role{shop.ID: RoleManager}, false},
+	}
+	for _, c := range cases {
+		check(t, c.name, Can(member(c.roles), TransferRequest, Transfer{Request: moving, To: app}), c.want)
+	}
+	both := member(map[uuid.UUID]Role{shop.ID: RoleTriager, app.ID: RoleTriager})
+	check(t, "to its own project", Can(both, TransferRequest, Transfer{Request: moving, To: shop}), false)
+	check(t, "wrong action", Can(both, TriageRequest, Transfer{Request: moving, To: app}), false)
+	check(t, "admin", Can(Subject{UserID: marie, Org: OrgAdmin}, TransferRequest, Transfer{Request: moving, To: app}), true)
+}
+
 func TestNilUserIsNeverAuthor(t *testing.T) {
 	anon := Subject{Roles: map[uuid.UUID]Role{shop.ID: RoleReporter}}
 	check(t, "nil author", Can(anon, ViewRequest, Request{Project: shop, OriginProject: shop.ID}), false)

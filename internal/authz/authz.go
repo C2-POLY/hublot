@@ -74,6 +74,12 @@ type Request struct {
 	Private       bool
 }
 
+// Transfer is a request about to move to another project.
+type Transfer struct {
+	Request Request
+	To      Project
+}
+
 // Attachment is what authz needs to know about an attachment.
 type Attachment struct {
 	AuthorID uuid.UUID
@@ -88,8 +94,11 @@ const (
 	ManageAccess   Action = "project.access"  // manage the project's grants
 	ViewRequest    Action = "request.view"    // read a request
 	CommentRequest Action = "request.comment" // comment on a request
-	TriageRequest  Action = "request.triage"  // classify, prioritise, transfer
-	ViewAttachment Action = "attachment.view" // download an attachment
+	TriageProject  Action = "project.triage"  // see the project's triage inbox
+	TriageRequest  Action = "request.triage"  // classify, prioritise, close
+	// TransferRequest needs triage rights on both the request's project and the destination.
+	TransferRequest Action = "request.transfer"
+	ViewAttachment  Action = "attachment.view" // download an attachment
 )
 
 // Can is the only authorization decision of the portal. Unknown action or resource: denied.
@@ -101,13 +110,16 @@ func Can(s Subject, a Action, resource any) bool {
 		return canRequest(s, a, r)
 	case Attachment:
 		return canAttachment(s, a, r)
+	case Transfer:
+		return a == TransferRequest && r.To.ID != r.Request.Project.ID &&
+			canRequest(s, TriageRequest, r.Request) && canProject(s, TriageProject, r.To)
 	}
 	return false
 }
 
 func canProject(s Subject, a Action, p Project) bool {
 	if s.IsAdmin() {
-		return a == ViewProject || a == CreateRequest || a == ManageAccess
+		return a == ViewProject || a == CreateRequest || a == ManageAccess || a == TriageProject
 	}
 	role := s.role(p.ID)
 	switch a {
@@ -115,6 +127,8 @@ func canProject(s Subject, a Action, p Project) bool {
 		return role >= RoleViewer
 	case CreateRequest:
 		return role >= RoleReporter
+	case TriageProject:
+		return role >= RoleTriager
 	case ManageAccess:
 		return role >= RoleManager
 	}

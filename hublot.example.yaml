@@ -54,6 +54,13 @@ kinds:
   idea: idea.yml
   question: question.yml
 
+# Optional: the organisation issue type set when triage changes a request's kind.
+# Without it, the issue type of the new kind's form (its `type:` key) is used, if any.
+# issue_types:
+#   problem: Bug
+#   idea: Feature
+#   question: Question
+
 # Each project ("logiciel") is one repository. Vehicles: boat, submarine, train,
 # plane, rocket, car, bus. Colours from the Franc palette.
 projects:

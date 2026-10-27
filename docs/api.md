@@ -33,6 +33,7 @@ The token is never consumed by a GET, so mail scanners that prefetch links canno
   "name": "Marie",
   "lang": "fr",
   "orgRole": "member",
+  "canTriage": false,
   "projects": [
     {
       "slug": "online-shop",
@@ -51,6 +52,7 @@ The token is never consumed by a GET, so mail scanners that prefetch links canno
 `projects` lists only the projects the user may at least view. `orgRole` is `owner`, `admin` or `member`.
 `vehicle` is one of `boat`, `submarine`, `train`, `plane`, `rocket`, `car`, `bus`.
 `inbox: true` marks the shared intake project shown as "Je ne sais pas" in the request flow.
+`canTriage` is true when the user may triage at least one project (shows the triage entry).
 
 ## Preferences
 
@@ -165,6 +167,38 @@ computed from the GitHub issue each time it changes, first match wins:
 `history` (detail only) lists the status changes, oldest first, starting with `received` at filing.
 `number` is the GitHub issue number, shown small, only to talk to a developer. After a transfer in
 GitHub, the request follows its issue: `project` and `number` are the new ones.
+
+## Triage
+
+Triage rights: `triager` or `manager` on the request's project, or org `owner`/`admin`. The triage
+state lives in GitHub: a new request carries the label `portal:new` until it is accepted or closed.
+
+`GET /api/triage` → `200`:
+
+```json
+{
+  "requests": [Request],
+  "projects": [{"slug": "online-shop", "name": "Boutique en ligne", "color": "#B9AEFF", "vehicle": "boat"}]
+}
+```
+
+`requests` are the open requests labelled `portal:new` of every project the user may triage, the inbox
+project first, then newest first (no `history`, empty `attachments`). `projects` are the projects the
+user may triage: the filters and the transfer destinations. Nobody to triage for is an empty answer,
+never an error. An org admin reading a project's inbox without a grant on it is audited (`triage.list`).
+
+`POST /api/triage/{id}/{action}` → `200 Request` as the user now sees it (`204` if they no longer may),
+`404` when the user cannot see the request, `403` when they see it but may not triage it,
+`422 validation` for a bad body. Each action is written to GitHub first, then applied to the cache the
+way a webhook would be, and audited (`triage.<action>`, with `via_org_role` for admins without a grant).
+
+| Action | Body | Effect in GitHub | Leaves the inbox |
+|---|---|---|---|
+| `accept` | none | removes `portal:new` | yes |
+| `kind` | `{"kind": "idea"}` | swaps the old kind's form labels for the new one's; sets the issue type from `issue_types` (config), else the new form's `type`, else leaves it; updates the request's kind | no |
+| `transfer` | `{"project": "mobile-app"}` | transfers the issue to the destination repository (labels kept); the request follows, its author keeps seeing it. Needs triage rights on both projects (`403`); an unknown or hidden destination, or the same project, is `422` | no |
+| `private` | `{"private": true}` | adds or removes `portal:private` | no |
+| `close` | `{"reason": "not_planned"}` or `"duplicate"` | closes the issue with that reason, removes `portal:new` | yes |
 
 ## GitHub webhook
 

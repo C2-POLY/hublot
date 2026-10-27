@@ -14,6 +14,7 @@ import { RequestsPage } from './pages/RequestsPage'
 import { RequestPage } from './pages/RequestPage'
 import { NotFoundPage } from './pages/NotFoundPage'
 import { PreferencesPage } from './pages/PreferencesPage'
+import { TriagePage } from './pages/TriagePage'
 
 export default function App() {
   const navigate = useNavigate()
@@ -46,6 +47,7 @@ export default function App() {
           <Route path="demandes/nouvelle" element={<NewRequestPage />} />
           <Route path="demandes/:id" element={<RequestPage />} />
           <Route path="preferences" element={<PreferencesPage />} />
+          <Route path="triage" element={<TriagePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>

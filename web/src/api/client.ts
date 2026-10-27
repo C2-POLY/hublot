@@ -32,6 +32,7 @@ export interface Me {
   lang: string
   orgRole: OrgRole
   projects: Project[]
+  canTriage: boolean
 }
 
 export interface Preferences {
@@ -101,6 +102,18 @@ export interface PortalRequest {
   author: { name: string }
   attachments: Attachment[]
 }
+
+export interface TriageInbox {
+  requests: PortalRequest[]
+  projects: RequestProject[]
+}
+
+export type TriageAction =
+  | { action: 'accept' }
+  | { action: 'kind'; kind: Kind }
+  | { action: 'transfer'; project: string }
+  | { action: 'private'; private: boolean }
+  | { action: 'close'; reason: 'not_planned' | 'duplicate' }
 
 export type FieldValue = string | string[]
 
@@ -181,4 +194,8 @@ export const api = {
   createRequest: (body: NewRequest) => request<PortalRequest>('POST', '/api/requests', body),
   myRequests: () => request<{ requests: PortalRequest[] }>('GET', '/api/requests?scope=mine'),
   getRequest: (id: string) => request<PortalRequest>('GET', `/api/requests/${encodeURIComponent(id)}`),
+  triageInbox: () => request<TriageInbox>('GET', '/api/triage'),
+  // 204 (no body) when the person can no longer see the request after the action.
+  triage: (id: string, { action, ...body }: TriageAction) =>
+    request<PortalRequest | undefined>('POST', `/api/triage/${encodeURIComponent(id)}/${action}`, body),
 }

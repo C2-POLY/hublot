@@ -38,7 +38,15 @@ export function Header({ me }: { me: Me }) {
           <NavLink to="/demandes" end className={navClass}>
             {t('nav.requests')}
           </NavLink>
-          {/* Staff links (triage, features, access, settings) and their separator arrive with those screens. */}
+          {me.canTriage && (
+            <>
+              <span aria-hidden="true" className="mx-1.5 hidden h-7 w-[2.5px] bg-ink sm:inline-block" />
+              <NavLink to="/triage" className={navClass}>
+                {t('nav.triage')}
+              </NavLink>
+            </>
+          )}
+          {/* Staff links (features, access, settings) arrive with those screens. */}
         </nav>
         <div className="ml-auto flex items-center gap-4 sm:ml-0">
           <Link

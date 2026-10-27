@@ -946,6 +946,83 @@ func (q *Queries) ListRequestsByProject(ctx context.Context, projectID uuid.UUID
 	return items, nil
 }
 
+const listTriageInbox = `-- name: ListTriageInbox :many
+SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owner, r.repo_name, r.issue_number, r.issue_node_id, r.created_at, r.status, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
+FROM request r
+JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
+JOIN app_user u ON u.id = r.author_id
+JOIN project p ON p.id = r.project_id
+WHERE r.project_id = ANY($1::uuid[]) AND c.state = 'open' AND c.deleted_at IS NULL
+  AND $2::text = ANY(c.labels)
+ORDER BY p.inbox DESC, r.created_at DESC
+LIMIT 200
+`
+
+type ListTriageInboxParams struct {
+	ProjectIds []uuid.UUID
+	Label      string
+}
+
+type ListTriageInboxRow struct {
+	ID              uuid.UUID
+	ProjectID       uuid.UUID
+	OriginProjectID uuid.UUID
+	AuthorID        uuid.UUID
+	Kind            string
+	RepoOwner       string
+	RepoName        string
+	IssueNumber     int32
+	IssueNodeID     string
+	CreatedAt       time.Time
+	Status          string
+	Title           string
+	State           string
+	StateReason     string
+	Labels          []string
+	Milestone       string
+	AuthorName      string
+}
+
+// Open requests nobody triaged yet (label portal:new) in the given projects:
+// the inbox project first, then the newest.
+func (q *Queries) ListTriageInbox(ctx context.Context, arg ListTriageInboxParams) ([]ListTriageInboxRow, error) {
+	rows, err := q.db.Query(ctx, listTriageInbox, arg.ProjectIds, arg.Label)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListTriageInboxRow{}
+	for rows.Next() {
+		var i ListTriageInboxRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.OriginProjectID,
+			&i.AuthorID,
+			&i.Kind,
+			&i.RepoOwner,
+			&i.RepoName,
+			&i.IssueNumber,
+			&i.IssueNodeID,
+			&i.CreatedAt,
+			&i.Status,
+			&i.Title,
+			&i.State,
+			&i.StateReason,
+			&i.Labels,
+			&i.Milestone,
+			&i.AuthorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const lockRequest = `-- name: LockRequest :one
 SELECT id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, created_at, status FROM request WHERE id = $1 FOR UPDATE
 `
@@ -1120,6 +1197,20 @@ type SetProjectSyncedParams struct {
 
 func (q *Queries) SetProjectSynced(ctx context.Context, arg SetProjectSyncedParams) error {
 	_, err := q.db.Exec(ctx, setProjectSynced, arg.ID, arg.SyncedAt)
+	return err
+}
+
+const setRequestKind = `-- name: SetRequestKind :exec
+UPDATE request SET kind = $2 WHERE id = $1
+`
+
+type SetRequestKindParams struct {
+	ID   uuid.UUID
+	Kind string
+}
+
+func (q *Queries) SetRequestKind(ctx context.Context, arg SetRequestKindParams) error {
+	_, err := q.db.Exec(ctx, setRequestKind, arg.ID, arg.Kind)
 	return err
 }
 
