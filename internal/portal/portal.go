@@ -12,7 +12,9 @@ import (
 	"sync"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/riverqueue/river"
 
 	"github.com/C2-POLY/hublot/internal/authz"
 	"github.com/C2-POLY/hublot/internal/config"
@@ -40,6 +42,8 @@ type Service struct {
 	Forge forge.Forge
 	Store storage.Store
 	Cfg   *config.Config
+	// Jobs queues background work (NewJobs); following GitHub needs it.
+	Jobs *river.Client[pgx.Tx]
 
 	mu       sync.RWMutex
 	projects []db.Project

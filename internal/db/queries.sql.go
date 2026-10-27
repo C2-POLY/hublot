@@ -158,9 +158,9 @@ func (q *Queries) CreateLoginToken(ctx context.Context, arg CreateLoginTokenPara
 }
 
 const createRequest = `-- name: CreateRequest :one
-INSERT INTO request (id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id)
-VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, created_at
+INSERT INTO request (id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, status)
+VALUES ($1, $2, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, created_at, status
 `
 
 type CreateRequestParams struct {
@@ -172,6 +172,7 @@ type CreateRequestParams struct {
 	RepoName    string
 	IssueNumber int32
 	IssueNodeID string
+	Status      string
 }
 
 func (q *Queries) CreateRequest(ctx context.Context, arg CreateRequestParams) (Request, error) {
@@ -184,6 +185,7 @@ func (q *Queries) CreateRequest(ctx context.Context, arg CreateRequestParams) (R
 		arg.RepoName,
 		arg.IssueNumber,
 		arg.IssueNodeID,
+		arg.Status,
 	)
 	var i Request
 	err := row.Scan(
@@ -197,6 +199,7 @@ func (q *Queries) CreateRequest(ctx context.Context, arg CreateRequestParams) (R
 		&i.IssueNumber,
 		&i.IssueNodeID,
 		&i.CreatedAt,
+		&i.Status,
 	)
 	return i, err
 }
@@ -249,6 +252,21 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AppUser
 		&i.LastLoginAt,
 	)
 	return i, err
+}
+
+const deleteIssueCache = `-- name: DeleteIssueCache :exec
+DELETE FROM issue_cache WHERE repo_owner = $1 AND repo_name = $2 AND issue_number = $3
+`
+
+type DeleteIssueCacheParams struct {
+	RepoOwner   string
+	RepoName    string
+	IssueNumber int32
+}
+
+func (q *Queries) DeleteIssueCache(ctx context.Context, arg DeleteIssueCacheParams) error {
+	_, err := q.db.Exec(ctx, deleteIssueCache, arg.RepoOwner, arg.RepoName, arg.IssueNumber)
+	return err
 }
 
 const deleteSession = `-- name: DeleteSession :exec
@@ -311,6 +329,81 @@ func (q *Queries) EffectiveRoles(ctx context.Context, userID uuid.UUID) ([]Effec
 	return items, nil
 }
 
+const findRequestByID = `-- name: FindRequestByID :one
+SELECT id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, created_at, status FROM request WHERE id = $1
+`
+
+func (q *Queries) FindRequestByID(ctx context.Context, id uuid.UUID) (Request, error) {
+	row := q.db.QueryRow(ctx, findRequestByID, id)
+	var i Request
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.OriginProjectID,
+		&i.AuthorID,
+		&i.Kind,
+		&i.RepoOwner,
+		&i.RepoName,
+		&i.IssueNumber,
+		&i.IssueNodeID,
+		&i.CreatedAt,
+		&i.Status,
+	)
+	return i, err
+}
+
+const findRequestByIssue = `-- name: FindRequestByIssue :one
+SELECT id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, created_at, status FROM request WHERE repo_owner = $1 AND repo_name = $2 AND issue_number = $3
+`
+
+type FindRequestByIssueParams struct {
+	RepoOwner   string
+	RepoName    string
+	IssueNumber int32
+}
+
+func (q *Queries) FindRequestByIssue(ctx context.Context, arg FindRequestByIssueParams) (Request, error) {
+	row := q.db.QueryRow(ctx, findRequestByIssue, arg.RepoOwner, arg.RepoName, arg.IssueNumber)
+	var i Request
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.OriginProjectID,
+		&i.AuthorID,
+		&i.Kind,
+		&i.RepoOwner,
+		&i.RepoName,
+		&i.IssueNumber,
+		&i.IssueNodeID,
+		&i.CreatedAt,
+		&i.Status,
+	)
+	return i, err
+}
+
+const findRequestByNodeID = `-- name: FindRequestByNodeID :one
+SELECT id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, created_at, status FROM request WHERE issue_node_id = $1 AND issue_node_id <> '' LIMIT 1
+`
+
+func (q *Queries) FindRequestByNodeID(ctx context.Context, issueNodeID string) (Request, error) {
+	row := q.db.QueryRow(ctx, findRequestByNodeID, issueNodeID)
+	var i Request
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.OriginProjectID,
+		&i.AuthorID,
+		&i.Kind,
+		&i.RepoOwner,
+		&i.RepoName,
+		&i.IssueNumber,
+		&i.IssueNodeID,
+		&i.CreatedAt,
+		&i.Status,
+	)
+	return i, err
+}
+
 const getAttachment = `-- name: GetAttachment :one
 SELECT id, author_id, request_id, object_key, name, content_type, size, created_at FROM attachment WHERE id = $1
 `
@@ -342,8 +435,41 @@ func (q *Queries) GetGroupByName(ctx context.Context, name string) (UserGroup, e
 	return i, err
 }
 
+const getIssueCache = `-- name: GetIssueCache :one
+SELECT repo_owner, repo_name, issue_number, title, state, state_reason, labels, updated_at, node_id, milestone, issue_type, project_status, closed_at, issue_updated_at, deleted_at FROM issue_cache WHERE repo_owner = $1 AND repo_name = $2 AND issue_number = $3
+`
+
+type GetIssueCacheParams struct {
+	RepoOwner   string
+	RepoName    string
+	IssueNumber int32
+}
+
+func (q *Queries) GetIssueCache(ctx context.Context, arg GetIssueCacheParams) (IssueCache, error) {
+	row := q.db.QueryRow(ctx, getIssueCache, arg.RepoOwner, arg.RepoName, arg.IssueNumber)
+	var i IssueCache
+	err := row.Scan(
+		&i.RepoOwner,
+		&i.RepoName,
+		&i.IssueNumber,
+		&i.Title,
+		&i.State,
+		&i.StateReason,
+		&i.Labels,
+		&i.UpdatedAt,
+		&i.NodeID,
+		&i.Milestone,
+		&i.IssueType,
+		&i.ProjectStatus,
+		&i.ClosedAt,
+		&i.IssueUpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const getProjectBySlug = `-- name: GetProjectBySlug :one
-SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived FROM project WHERE slug = $1 AND NOT archived
+SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at FROM project WHERE slug = $1 AND NOT archived
 `
 
 func (q *Queries) GetProjectBySlug(ctx context.Context, slug string) (Project, error) {
@@ -362,12 +488,13 @@ func (q *Queries) GetProjectBySlug(ctx context.Context, slug string) (Project, e
 		&i.Inbox,
 		&i.Position,
 		&i.Archived,
+		&i.SyncedAt,
 	)
 	return i, err
 }
 
 const getRequest = `-- name: GetRequest :one
-SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owner, r.repo_name, r.issue_number, r.issue_node_id, r.created_at, c.title, c.state, c.state_reason, c.labels, u.name AS author_name
+SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owner, r.repo_name, r.issue_number, r.issue_node_id, r.created_at, r.status, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
@@ -385,10 +512,12 @@ type GetRequestRow struct {
 	IssueNumber     int32
 	IssueNodeID     string
 	CreatedAt       time.Time
+	Status          string
 	Title           string
 	State           string
 	StateReason     string
 	Labels          []string
+	Milestone       string
 	AuthorName      string
 }
 
@@ -406,10 +535,12 @@ func (q *Queries) GetRequest(ctx context.Context, id uuid.UUID) (GetRequestRow, 
 		&i.IssueNumber,
 		&i.IssueNodeID,
 		&i.CreatedAt,
+		&i.Status,
 		&i.Title,
 		&i.State,
 		&i.StateReason,
 		&i.Labels,
+		&i.Milestone,
 		&i.AuthorName,
 	)
 	return i, err
@@ -504,6 +635,20 @@ func (q *Queries) InsertAudit(ctx context.Context, arg InsertAuditParams) error 
 	return err
 }
 
+const insertRequestStatus = `-- name: InsertRequestStatus :exec
+INSERT INTO request_status (request_id, status) VALUES ($1, $2)
+`
+
+type InsertRequestStatusParams struct {
+	RequestID uuid.UUID
+	Status    string
+}
+
+func (q *Queries) InsertRequestStatus(ctx context.Context, arg InsertRequestStatusParams) error {
+	_, err := q.db.Exec(ctx, insertRequestStatus, arg.RequestID, arg.Status)
+	return err
+}
+
 const linkAttachment = `-- name: LinkAttachment :execrows
 UPDATE attachment SET request_id = $1
 WHERE id = $2 AND author_id = $3 AND request_id IS NULL
@@ -524,7 +669,7 @@ func (q *Queries) LinkAttachment(ctx context.Context, arg LinkAttachmentParams) 
 }
 
 const listAllProjects = `-- name: ListAllProjects :many
-SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived FROM project ORDER BY position, name
+SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at FROM project ORDER BY position, name
 `
 
 func (q *Queries) ListAllProjects(ctx context.Context) ([]Project, error) {
@@ -549,6 +694,7 @@ func (q *Queries) ListAllProjects(ctx context.Context) ([]Project, error) {
 			&i.Inbox,
 			&i.Position,
 			&i.Archived,
+			&i.SyncedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -561,7 +707,7 @@ func (q *Queries) ListAllProjects(ctx context.Context) ([]Project, error) {
 }
 
 const listProjects = `-- name: ListProjects :many
-SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived FROM project WHERE NOT archived ORDER BY position, name
+SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at FROM project WHERE NOT archived ORDER BY position, name
 `
 
 func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
@@ -586,6 +732,7 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 			&i.Inbox,
 			&i.Position,
 			&i.Archived,
+			&i.SyncedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -630,8 +777,37 @@ func (q *Queries) ListRequestAttachments(ctx context.Context, requestID uuid.Nul
 	return items, nil
 }
 
+const listRequestStatus = `-- name: ListRequestStatus :many
+SELECT status, at FROM request_status WHERE request_id = $1 ORDER BY at, id
+`
+
+type ListRequestStatusRow struct {
+	Status string
+	At     time.Time
+}
+
+func (q *Queries) ListRequestStatus(ctx context.Context, requestID uuid.UUID) ([]ListRequestStatusRow, error) {
+	rows, err := q.db.Query(ctx, listRequestStatus, requestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListRequestStatusRow{}
+	for rows.Next() {
+		var i ListRequestStatusRow
+		if err := rows.Scan(&i.Status, &i.At); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRequestsByAuthor = `-- name: ListRequestsByAuthor :many
-SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owner, r.repo_name, r.issue_number, r.issue_node_id, r.created_at, c.title, c.state, c.state_reason, c.labels, u.name AS author_name
+SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owner, r.repo_name, r.issue_number, r.issue_node_id, r.created_at, r.status, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
@@ -651,10 +827,12 @@ type ListRequestsByAuthorRow struct {
 	IssueNumber     int32
 	IssueNodeID     string
 	CreatedAt       time.Time
+	Status          string
 	Title           string
 	State           string
 	StateReason     string
 	Labels          []string
+	Milestone       string
 	AuthorName      string
 }
 
@@ -678,10 +856,12 @@ func (q *Queries) ListRequestsByAuthor(ctx context.Context, authorID uuid.UUID) 
 			&i.IssueNumber,
 			&i.IssueNodeID,
 			&i.CreatedAt,
+			&i.Status,
 			&i.Title,
 			&i.State,
 			&i.StateReason,
 			&i.Labels,
+			&i.Milestone,
 			&i.AuthorName,
 		); err != nil {
 			return nil, err
@@ -695,7 +875,7 @@ func (q *Queries) ListRequestsByAuthor(ctx context.Context, authorID uuid.UUID) 
 }
 
 const listRequestsByProject = `-- name: ListRequestsByProject :many
-SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owner, r.repo_name, r.issue_number, r.issue_node_id, r.created_at, c.title, c.state, c.state_reason, c.labels, u.name AS author_name
+SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owner, r.repo_name, r.issue_number, r.issue_node_id, r.created_at, r.status, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
@@ -715,10 +895,12 @@ type ListRequestsByProjectRow struct {
 	IssueNumber     int32
 	IssueNodeID     string
 	CreatedAt       time.Time
+	Status          string
 	Title           string
 	State           string
 	StateReason     string
 	Labels          []string
+	Milestone       string
 	AuthorName      string
 }
 
@@ -742,10 +924,12 @@ func (q *Queries) ListRequestsByProject(ctx context.Context, projectID uuid.UUID
 			&i.IssueNumber,
 			&i.IssueNodeID,
 			&i.CreatedAt,
+			&i.Status,
 			&i.Title,
 			&i.State,
 			&i.StateReason,
 			&i.Labels,
+			&i.Milestone,
 			&i.AuthorName,
 		); err != nil {
 			return nil, err
@@ -756,6 +940,46 @@ func (q *Queries) ListRequestsByProject(ctx context.Context, projectID uuid.UUID
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockRequest = `-- name: LockRequest :one
+SELECT id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, created_at, status FROM request WHERE id = $1 FOR UPDATE
+`
+
+// Serialises the updates of one request: two events about it never interleave.
+func (q *Queries) LockRequest(ctx context.Context, id uuid.UUID) (Request, error) {
+	row := q.db.QueryRow(ctx, lockRequest, id)
+	var i Request
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.OriginProjectID,
+		&i.AuthorID,
+		&i.Kind,
+		&i.RepoOwner,
+		&i.RepoName,
+		&i.IssueNumber,
+		&i.IssueNodeID,
+		&i.CreatedAt,
+		&i.Status,
+	)
+	return i, err
+}
+
+const markIssueDeleted = `-- name: MarkIssueDeleted :exec
+UPDATE issue_cache SET deleted_at = now(), updated_at = now()
+WHERE repo_owner = $1 AND repo_name = $2 AND issue_number = $3
+`
+
+type MarkIssueDeletedParams struct {
+	RepoOwner   string
+	RepoName    string
+	IssueNumber int32
+}
+
+func (q *Queries) MarkIssueDeleted(ctx context.Context, arg MarkIssueDeletedParams) error {
+	_, err := q.db.Exec(ctx, markIssueDeleted, arg.RepoOwner, arg.RepoName, arg.IssueNumber)
+	return err
 }
 
 const maxIssueNumber = `-- name: MaxIssueNumber :one
@@ -773,6 +997,110 @@ func (q *Queries) MaxIssueNumber(ctx context.Context, arg MaxIssueNumberParams) 
 	var number int32
 	err := row.Scan(&number)
 	return number, err
+}
+
+const moveRequest = `-- name: MoveRequest :exec
+UPDATE request SET project_id = $1, repo_owner = $2, repo_name = $3,
+    issue_number = $4, issue_node_id = $5
+WHERE id = $6
+`
+
+type MoveRequestParams struct {
+	ProjectID   uuid.UUID
+	RepoOwner   string
+	RepoName    string
+	IssueNumber int32
+	IssueNodeID string
+	ID          uuid.UUID
+}
+
+// After a transfer. origin_project_id never changes: the author keeps seeing it.
+func (q *Queries) MoveRequest(ctx context.Context, arg MoveRequestParams) error {
+	_, err := q.db.Exec(ctx, moveRequest,
+		arg.ProjectID,
+		arg.RepoOwner,
+		arg.RepoName,
+		arg.IssueNumber,
+		arg.IssueNodeID,
+		arg.ID,
+	)
+	return err
+}
+
+const pruneWebhookDeliveries = `-- name: PruneWebhookDeliveries :exec
+DELETE FROM webhook_delivery WHERE received_at < $1
+`
+
+func (q *Queries) PruneWebhookDeliveries(ctx context.Context, receivedAt time.Time) error {
+	_, err := q.db.Exec(ctx, pruneWebhookDeliveries, receivedAt)
+	return err
+}
+
+const recordWebhookDelivery = `-- name: RecordWebhookDelivery :execrows
+INSERT INTO webhook_delivery (delivery_id, event) VALUES ($1, $2) ON CONFLICT DO NOTHING
+`
+
+type RecordWebhookDeliveryParams struct {
+	DeliveryID string
+	Event      string
+}
+
+func (q *Queries) RecordWebhookDelivery(ctx context.Context, arg RecordWebhookDeliveryParams) (int64, error) {
+	result, err := q.db.Exec(ctx, recordWebhookDelivery, arg.DeliveryID, arg.Event)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setIssueProjectStatus = `-- name: SetIssueProjectStatus :exec
+UPDATE issue_cache SET project_status = $1, updated_at = now()
+WHERE repo_owner = $2 AND repo_name = $3 AND issue_number = $4
+`
+
+type SetIssueProjectStatusParams struct {
+	ProjectStatus string
+	RepoOwner     string
+	RepoName      string
+	IssueNumber   int32
+}
+
+func (q *Queries) SetIssueProjectStatus(ctx context.Context, arg SetIssueProjectStatusParams) error {
+	_, err := q.db.Exec(ctx, setIssueProjectStatus,
+		arg.ProjectStatus,
+		arg.RepoOwner,
+		arg.RepoName,
+		arg.IssueNumber,
+	)
+	return err
+}
+
+const setProjectSynced = `-- name: SetProjectSynced :exec
+UPDATE project SET synced_at = $2 WHERE id = $1
+`
+
+type SetProjectSyncedParams struct {
+	ID       uuid.UUID
+	SyncedAt *time.Time
+}
+
+func (q *Queries) SetProjectSynced(ctx context.Context, arg SetProjectSyncedParams) error {
+	_, err := q.db.Exec(ctx, setProjectSynced, arg.ID, arg.SyncedAt)
+	return err
+}
+
+const setRequestStatus = `-- name: SetRequestStatus :exec
+UPDATE request SET status = $2 WHERE id = $1
+`
+
+type SetRequestStatusParams struct {
+	ID     uuid.UUID
+	Status string
+}
+
+func (q *Queries) SetRequestStatus(ctx context.Context, arg SetRequestStatusParams) error {
+	_, err := q.db.Exec(ctx, setRequestStatus, arg.ID, arg.Status)
+	return err
 }
 
 const touchSession = `-- name: TouchSession :exec
@@ -811,32 +1139,50 @@ func (q *Queries) UpsertGroupGrant(ctx context.Context, arg UpsertGroupGrantPara
 }
 
 const upsertIssueCache = `-- name: UpsertIssueCache :exec
-INSERT INTO issue_cache (repo_owner, repo_name, issue_number, title, state, state_reason, labels, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+INSERT INTO issue_cache (repo_owner, repo_name, issue_number, node_id, title, state, state_reason, labels,
+                         milestone, issue_type, closed_at, issue_updated_at, updated_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8,
+        $9, $10, $11, $12, now())
 ON CONFLICT (repo_owner, repo_name, issue_number) DO UPDATE SET
-    title = EXCLUDED.title, state = EXCLUDED.state, state_reason = EXCLUDED.state_reason,
-    labels = EXCLUDED.labels, updated_at = now()
+    node_id = EXCLUDED.node_id, title = EXCLUDED.title, state = EXCLUDED.state,
+    state_reason = EXCLUDED.state_reason, labels = EXCLUDED.labels, milestone = EXCLUDED.milestone,
+    issue_type = EXCLUDED.issue_type, closed_at = EXCLUDED.closed_at,
+    issue_updated_at = EXCLUDED.issue_updated_at, deleted_at = NULL, updated_at = now()
+WHERE issue_cache.issue_updated_at IS NULL OR EXCLUDED.issue_updated_at IS NULL
+   OR EXCLUDED.issue_updated_at >= issue_cache.issue_updated_at
 `
 
 type UpsertIssueCacheParams struct {
-	RepoOwner   string
-	RepoName    string
-	IssueNumber int32
-	Title       string
-	State       string
-	StateReason string
-	Labels      []string
+	RepoOwner      string
+	RepoName       string
+	IssueNumber    int32
+	NodeID         string
+	Title          string
+	State          string
+	StateReason    string
+	Labels         []string
+	Milestone      string
+	IssueType      string
+	ClosedAt       *time.Time
+	IssueUpdatedAt *time.Time
 }
 
+// An older snapshot (a webhook delivered late) never overwrites a newer one.
+// The project status is kept: it has its own query.
 func (q *Queries) UpsertIssueCache(ctx context.Context, arg UpsertIssueCacheParams) error {
 	_, err := q.db.Exec(ctx, upsertIssueCache,
 		arg.RepoOwner,
 		arg.RepoName,
 		arg.IssueNumber,
+		arg.NodeID,
 		arg.Title,
 		arg.State,
 		arg.StateReason,
 		arg.Labels,
+		arg.Milestone,
+		arg.IssueType,
+		arg.ClosedAt,
+		arg.IssueUpdatedAt,
 	)
 	return err
 }
@@ -849,7 +1195,7 @@ ON CONFLICT (slug) DO UPDATE SET
     repo_owner = EXCLUDED.repo_owner, repo_name = EXCLUDED.repo_name,
     reporters_see_all = EXCLUDED.reporters_see_all, inbox = EXCLUDED.inbox,
     position = EXCLUDED.position, archived = false
-RETURNING id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived
+RETURNING id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at
 `
 
 type UpsertProjectParams struct {
@@ -892,6 +1238,7 @@ func (q *Queries) UpsertProject(ctx context.Context, arg UpsertProjectParams) (P
 		&i.Inbox,
 		&i.Position,
 		&i.Archived,
+		&i.SyncedAt,
 	)
 	return i, err
 }

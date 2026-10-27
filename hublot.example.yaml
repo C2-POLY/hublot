@@ -41,6 +41,12 @@ forge:
     app_id: ${HUBLOT_GITHUB_APP_ID}
     installation_id: ${HUBLOT_GITHUB_INSTALLATION_ID}
     private_key_path: /run/secrets/github-app.pem
+    # The GitHub App webhook (POST {base_url}/webhooks/github) is signed with this secret.
+    webhook_secret: ${HUBLOT_GITHUB_WEBHOOK_SECRET}
+
+sync:
+  # Webhooks keep the cache fresh; this periodic resync repairs what a lost delivery missed.
+  resync_interval: 1h
 
 # Which issue form of the repository (.github/ISSUE_TEMPLATE/) each request kind uses.
 kinds:
@@ -57,6 +63,12 @@ projects:
     color: "#B9AEFF"
     vehicle: boat
     repo: example-org/shop
+    # Optional: read the detailed status of open issues from an organisation Project
+    # single-select field. Without it: closed, milestone (planned) or received.
+    status:
+      project: 12           # the Project number (github.com/orgs/example-org/projects/12)
+      field: Status
+      options: {Todo: planned, In progress: in_progress, In review: in_test, Done: available}
   - slug: mobile-app
     name: Mobile app
     hint: iOS and Android

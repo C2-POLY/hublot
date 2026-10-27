@@ -43,6 +43,8 @@ Commands:
   grant -project P -role R (-email E | -group G)
                                             give a role on a project (viewer, reporter,
                                             contributor, triager, manager)
+  resync [-project P]                       re-read every portal issue from GitHub, for one
+                                            project or all of them
 `
 
 func main() {
@@ -89,6 +91,8 @@ func run(ctx context.Context, cfgPath, cmd string, args []string) error {
 		return cmdGroup(ctx, q, args)
 	case "grant":
 		return cmdGrant(ctx, cfg, pool, q, args)
+	case "resync":
+		return cmdResync(ctx, cfg, pool, q, args)
 	}
 	return fmt.Errorf("unknown command %q", cmd)
 }
@@ -104,6 +108,13 @@ func serve(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, q *db.Qu
 	}
 	p := &portal.Service{Pool: pool, Q: q, Forge: f, Store: store, Cfg: cfg}
 	if err := p.SyncProjects(ctx); err != nil {
+		return err
+	}
+	if p.Jobs, err = portal.NewJobs(p, true); err != nil {
+		return err
+	}
+	// Not ctx: a signal must let running jobs finish (Stop below), not cancel them.
+	if err := p.Jobs.Start(context.WithoutCancel(ctx)); err != nil {
 		return err
 	}
 	webFS, err := webFiles(cfg)
@@ -131,7 +142,9 @@ func serve(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, q *db.Qu
 	}
 	shutdown, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
-	return httpServer.Shutdown(shutdown)
+	err = httpServer.Shutdown(shutdown)
+	// Running jobs get the rest of the delay; unfinished ones are retried on the next start.
+	return errors.Join(err, p.Jobs.Stop(shutdown))
 }
 
 func newForge(cfg *config.Config, q *db.Queries) (forge.Forge, error) {
@@ -295,6 +308,42 @@ func cmdGrant(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, q *db
 		return err
 	}
 	fmt.Printf("%s is now %s on %s\n", target, pr, proj.Slug)
+	return nil
+}
+
+func cmdResync(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, q *db.Queries, args []string) error {
+	fl := flag.NewFlagSet("resync", flag.ExitOnError)
+	project := fl.String("project", "", "project slug (default: every project)")
+	_ = fl.Parse(args)
+	f, err := newForge(cfg, q)
+	if err != nil {
+		return err
+	}
+	p := &portal.Service{Pool: pool, Q: q, Forge: f, Cfg: cfg}
+	if err := p.SyncProjects(ctx); err != nil {
+		return err
+	}
+	// Status changes queue their notifications for the running server to send.
+	if p.Jobs, err = portal.NewJobs(p, false); err != nil {
+		return err
+	}
+	slugs := []string{*project}
+	if *project == "" {
+		slugs = slugs[:0]
+		for _, cp := range cfg.Projects {
+			slugs = append(slugs, cp.Slug)
+		}
+	}
+	for _, slug := range slugs {
+		n, err := p.ResyncProject(ctx, slug, true)
+		if errors.Is(err, portal.ErrNotFound) {
+			return fmt.Errorf("unknown project %q", slug)
+		}
+		if err != nil {
+			return fmt.Errorf("%s: %w", slug, err)
+		}
+		fmt.Printf("%s: %d issues read\n", slug, n)
+	}
 	return nil
 }
 

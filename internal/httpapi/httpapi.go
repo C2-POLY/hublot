@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 // Package httpapi is the portal's HTTP surface: the JSON API under /api (docs/api.md),
-// signed attachment links under /files, and the SPA for everything else.
+// signed attachment links under /files, the GitHub webhook, and the SPA for everything else.
 package httpapi
 
 import (
@@ -22,6 +22,7 @@ import (
 	"github.com/C2-POLY/hublot/internal/authz"
 	"github.com/C2-POLY/hublot/internal/config"
 	"github.com/C2-POLY/hublot/internal/db"
+	"github.com/C2-POLY/hublot/internal/forge"
 	"github.com/C2-POLY/hublot/internal/portal"
 )
 
@@ -53,6 +54,11 @@ func (s *Server) Handler() http.Handler {
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
 	r.Get("/files/{id}", s.file)
+	// Outside /api: GitHub signs its deliveries, it has no session nor CSRF header.
+	r.Post("/webhooks/github", s.githubWebhook)
+	if fake, ok := s.Portal.Forge.(*forge.Fake); ok && s.Cfg.Forge.Driver == "fake" {
+		r.Post("/dev/fake/issues/{owner}/{repo}/{number}", s.fakeIssueChange(fake))
+	}
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(csrfGuard, noStore)

@@ -48,6 +48,13 @@ type RequestView struct {
 	CreatedAt   time.Time        `json:"createdAt"`
 	Author      AuthorRef        `json:"author"`
 	Attachments []AttachmentView `json:"attachments"`
+	// History lists the status changes, oldest first; only in the detail.
+	History []StatusChange `json:"history,omitempty"`
+}
+
+type StatusChange struct {
+	Status string    `json:"status"`
+	At     time.Time `json:"at"`
 }
 
 type ProjectRef struct {
@@ -104,7 +111,7 @@ func (s *Service) CreateRequest(ctx context.Context, sub authz.Subject, author d
 
 	id := uuid.New()
 	labels := slices.Clone(form.Labels)
-	labels = append(labels, forge.LabelPortal)
+	labels = append(labels, forge.LabelPortal, forge.LabelNew)
 	if in.Private {
 		labels = append(labels, forge.LabelPrivate)
 	}
@@ -131,18 +138,20 @@ func (s *Service) CreateRequest(ctx context.Context, sub authz.Subject, author d
 	}
 	defer tx.Rollback(ctx)
 	q := s.Q.WithTx(tx)
+	status := Status(in.Kind, IssueState{State: issue.State, StateReason: issue.StateReason, Milestone: issue.Milestone},
+		s.statusOptions(p.ID))
 	row, err := q.CreateRequest(ctx, db.CreateRequestParams{
 		ID: id, ProjectID: p.ID, AuthorID: author.ID, Kind: in.Kind,
 		RepoOwner: p.RepoOwner, RepoName: p.RepoName,
-		IssueNumber: int32(issue.Number), IssueNodeID: issue.NodeID,
+		IssueNumber: int32(issue.Number), IssueNodeID: issue.NodeID, Status: status,
 	})
 	if err != nil {
 		return RequestView{}, fmt.Errorf("record request for %s#%d: %w", repoOf(p), issue.Number, err)
 	}
-	if err := q.UpsertIssueCache(ctx, db.UpsertIssueCacheParams{
-		RepoOwner: p.RepoOwner, RepoName: p.RepoName, IssueNumber: int32(issue.Number),
-		Title: issue.Title, State: issue.State, StateReason: issue.StateReason, Labels: nonNil(issue.Labels),
-	}); err != nil {
+	if err := q.InsertRequestStatus(ctx, db.InsertRequestStatusParams{RequestID: id, Status: status}); err != nil {
+		return RequestView{}, err
+	}
+	if err := upsertCache(ctx, q, repoOf(p), issue); err != nil {
 		return RequestView{}, err
 	}
 	for i := range attachments {
@@ -163,7 +172,7 @@ func (s *Service) CreateRequest(ctx context.Context, sub authz.Subject, author d
 		return RequestView{}, err
 	}
 
-	return s.view(p, row.ID, row.Kind, issue.Title, issue.State, issue.Labels, row.IssueNumber, row.CreatedAt, author.Name, attachments), nil
+	return s.view(p, row.ID, row.Kind, issue.Title, row.Status, issue.Labels, row.IssueNumber, row.CreatedAt, author.Name, attachments), nil
 }
 
 // validateFields checks the answers against the form and returns them as lists of strings.
@@ -320,13 +329,20 @@ func (s *Service) GetRequest(ctx context.Context, sub authz.Subject, id uuid.UUI
 	for _, a := range atts {
 		v.Attachments = append(v.Attachments, attachmentView(a))
 	}
+	history, err := s.Q.ListRequestStatus(ctx, id)
+	if err != nil {
+		return RequestView{}, err
+	}
+	for _, h := range history {
+		v.History = append(v.History, StatusChange{Status: h.Status, At: h.At})
+	}
 	return v, nil
 }
 
 // row is the common shape of the request list queries.
 type row struct {
 	ID, ProjectID, OriginProjectID, AuthorID uuid.UUID
-	Kind, Title, State, AuthorName           string
+	Kind, Title, Status, AuthorName          string
 	Labels                                   []string
 	IssueNumber                              int32
 	CreatedAt                                time.Time
@@ -337,7 +353,7 @@ func requestRow[T db.GetRequestRow | db.ListRequestsByAuthorRow | db.ListRequest
 	g := db.GetRequestRow(r)
 	return row{
 		ID: g.ID, ProjectID: g.ProjectID, OriginProjectID: g.OriginProjectID, AuthorID: g.AuthorID,
-		Kind: g.Kind, Title: g.Title, State: g.State, AuthorName: g.AuthorName,
+		Kind: g.Kind, Title: g.Title, Status: g.Status, AuthorName: g.AuthorName,
 		Labels: g.Labels, IssueNumber: g.IssueNumber, CreatedAt: g.CreatedAt,
 	}
 }
@@ -358,17 +374,17 @@ func (s *Service) visible(sub authz.Subject, r row) (RequestView, bool) {
 	if !ok || !authz.Can(sub, authz.ViewRequest, ar) {
 		return RequestView{}, false
 	}
-	return s.view(p, r.ID, r.Kind, r.Title, r.State, r.Labels, r.IssueNumber, r.CreatedAt, r.AuthorName, nil), true
+	return s.view(p, r.ID, r.Kind, r.Title, r.Status, r.Labels, r.IssueNumber, r.CreatedAt, r.AuthorName, nil), true
 }
 
-func (s *Service) view(p db.Project, id uuid.UUID, kind, title, state string, labels []string,
+func (s *Service) view(p db.Project, id uuid.UUID, kind, title, status string, labels []string,
 	number int32, created time.Time, author string, atts []db.Attachment) RequestView {
 	v := RequestView{
 		ID:          id,
 		Project:     ProjectRef{Slug: p.Slug, Name: p.Name, Color: p.Color, Vehicle: p.Vehicle},
 		Kind:        kind,
 		Title:       title,
-		Status:      status(state),
+		Status:      status,
 		Private:     slices.Contains(labels, forge.LabelPrivate),
 		Number:      number,
 		CreatedAt:   created,
@@ -379,15 +395,6 @@ func (s *Service) view(p db.Project, id uuid.UUID, kind, title, state string, la
 		v.Attachments = append(v.Attachments, attachmentView(a))
 	}
 	return v
-}
-
-// status translates GitHub's state into the portal's plain words. Milestone 1 knows only
-// open and closed; planned, in progress, in test and available come with webhooks.
-func status(state string) string {
-	if state == "closed" {
-		return "closed"
-	}
-	return "received"
 }
 
 func nonNil(s []string) []string {

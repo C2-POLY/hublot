@@ -35,6 +35,7 @@ type Config struct {
 	Storage     Storage     `yaml:"storage"`
 	Attachments Attachments `yaml:"attachments"`
 	Forge       Forge       `yaml:"forge"`
+	Sync        Sync        `yaml:"sync"`
 	// Kinds maps each request kind (problem, idea, question) to an issue form file.
 	Kinds    map[string]string `yaml:"kinds"`
 	Projects []Project         `yaml:"projects"`
@@ -87,6 +88,13 @@ type GitHub struct {
 	InstallationID int64  `yaml:"installation_id"`
 	PrivateKeyPath string `yaml:"private_key_path"`
 	APIURL         string `yaml:"api_url"` // GitHub Enterprise only
+	// WebhookSecret signs the deliveries of the GitHub App webhook (POST /webhooks/github).
+	WebhookSecret string `yaml:"webhook_secret"`
+}
+
+type Sync struct {
+	// ResyncInterval spaces the resyncs that repair what a lost webhook missed.
+	ResyncInterval time.Duration `yaml:"resync_interval"`
 }
 
 type Project struct {
@@ -99,6 +107,16 @@ type Project struct {
 	ReportersSeeAll bool              `yaml:"reporters_see_all"`
 	Inbox           bool              `yaml:"inbox"`
 	Kinds           map[string]string `yaml:"kinds"`
+	// Status reads the detailed status from a GitHub Project field. Optional.
+	Status *ProjectStatus `yaml:"status"`
+}
+
+// ProjectStatus maps the options of a single-select field of an organisation Project
+// to portal statuses, for open issues.
+type ProjectStatus struct {
+	Project int               `yaml:"project"` // the Project number in the organisation
+	Field   string            `yaml:"field"`
+	Options map[string]string `yaml:"options"`
 }
 
 func (p Project) RepoParts() (owner, name string) {
@@ -142,6 +160,7 @@ func (c *Config) IsBootstrapOwner(email string) bool {
 var (
 	Kinds    = []string{"problem", "idea", "question"}
 	Vehicles = []string{"boat", "submarine", "train", "plane", "rocket", "car", "bus"}
+	Statuses = []string{"received", "planned", "in_progress", "in_test", "available", "answered", "closed"}
 	slugRe   = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,62}$`)
 	colorRe  = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 )
@@ -198,6 +217,14 @@ func (c *Config) defaults() {
 	if c.Forge.AuthorEmail == "" {
 		c.Forge.AuthorEmail = "masked"
 	}
+	if c.Sync.ResyncInterval == 0 {
+		c.Sync.ResyncInterval = time.Hour
+	}
+	for _, p := range c.Projects {
+		if p.Status != nil && p.Status.Field == "" {
+			p.Status.Field = "Status"
+		}
+	}
 	if c.Kinds == nil {
 		c.Kinds = map[string]string{"problem": "bug.yml", "idea": "idea.yml", "question": "question.yml"}
 	}
@@ -240,6 +267,12 @@ func (c *Config) validate() error {
 	if !slices.Contains([]string{"github", "fake"}, c.Forge.Driver) {
 		errs = append(errs, fmt.Errorf("forge.driver %q: use github or fake", c.Forge.Driver))
 	}
+	if c.Forge.Driver == "github" && c.Forge.GitHub.WebhookSecret == "" {
+		errs = append(errs, errors.New("forge.github.webhook_secret is required with the github driver"))
+	}
+	if c.Sync.ResyncInterval < time.Minute {
+		errs = append(errs, errors.New("sync.resync_interval must be at least 1m"))
+	}
 	if !slices.Contains([]string{"masked", "full", "hidden"}, c.Forge.AuthorEmail) {
 		errs = append(errs, fmt.Errorf("forge.author_email %q: use masked, full or hidden", c.Forge.AuthorEmail))
 	}
@@ -278,6 +311,19 @@ func (c *Config) validate() error {
 		}
 		if p.Inbox {
 			inboxes++
+		}
+		if st := p.Status; st != nil {
+			if st.Project <= 0 {
+				errs = append(errs, fmt.Errorf("%s: status.project must be the Project number", where))
+			}
+			if len(st.Options) == 0 {
+				errs = append(errs, fmt.Errorf("%s: status.options maps at least one option", where))
+			}
+			for option, status := range st.Options {
+				if !slices.Contains(Statuses, status) {
+					errs = append(errs, fmt.Errorf("%s: status option %q: unknown status %q", where, option, status))
+				}
+			}
 		}
 	}
 	if inboxes > 1 {

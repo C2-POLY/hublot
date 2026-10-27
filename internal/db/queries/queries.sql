@@ -103,26 +103,85 @@ INSERT INTO audit_log (actor_id, via, action, target_type, target_id, details)
 VALUES ($1, $2, $3, $4, $5, $6);
 
 -- name: CreateRequest :one
-INSERT INTO request (id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id)
-VALUES (@id, @project_id, @project_id, @author_id, @kind, @repo_owner, @repo_name, @issue_number, @issue_node_id)
+INSERT INTO request (id, project_id, origin_project_id, author_id, kind, repo_owner, repo_name, issue_number, issue_node_id, status)
+VALUES (@id, @project_id, @project_id, @author_id, @kind, @repo_owner, @repo_name, @issue_number, @issue_node_id, @status)
 RETURNING *;
 
 -- name: UpsertIssueCache :exec
-INSERT INTO issue_cache (repo_owner, repo_name, issue_number, title, state, state_reason, labels, updated_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+-- An older snapshot (a webhook delivered late) never overwrites a newer one.
+-- The project status is kept: it has its own query.
+INSERT INTO issue_cache (repo_owner, repo_name, issue_number, node_id, title, state, state_reason, labels,
+                         milestone, issue_type, closed_at, issue_updated_at, updated_at)
+VALUES (@repo_owner, @repo_name, @issue_number, @node_id, @title, @state, @state_reason, @labels,
+        @milestone, @issue_type, @closed_at, @issue_updated_at, now())
 ON CONFLICT (repo_owner, repo_name, issue_number) DO UPDATE SET
-    title = EXCLUDED.title, state = EXCLUDED.state, state_reason = EXCLUDED.state_reason,
-    labels = EXCLUDED.labels, updated_at = now();
+    node_id = EXCLUDED.node_id, title = EXCLUDED.title, state = EXCLUDED.state,
+    state_reason = EXCLUDED.state_reason, labels = EXCLUDED.labels, milestone = EXCLUDED.milestone,
+    issue_type = EXCLUDED.issue_type, closed_at = EXCLUDED.closed_at,
+    issue_updated_at = EXCLUDED.issue_updated_at, deleted_at = NULL, updated_at = now()
+WHERE issue_cache.issue_updated_at IS NULL OR EXCLUDED.issue_updated_at IS NULL
+   OR EXCLUDED.issue_updated_at >= issue_cache.issue_updated_at;
+
+-- name: SetIssueProjectStatus :exec
+UPDATE issue_cache SET project_status = @project_status, updated_at = now()
+WHERE repo_owner = @repo_owner AND repo_name = @repo_name AND issue_number = @issue_number;
+
+-- name: MarkIssueDeleted :exec
+UPDATE issue_cache SET deleted_at = now(), updated_at = now()
+WHERE repo_owner = $1 AND repo_name = $2 AND issue_number = $3;
+
+-- name: DeleteIssueCache :exec
+DELETE FROM issue_cache WHERE repo_owner = $1 AND repo_name = $2 AND issue_number = $3;
+
+-- name: GetIssueCache :one
+SELECT * FROM issue_cache WHERE repo_owner = $1 AND repo_name = $2 AND issue_number = $3;
+
+-- name: FindRequestByIssue :one
+SELECT * FROM request WHERE repo_owner = $1 AND repo_name = $2 AND issue_number = $3;
+
+-- name: FindRequestByNodeID :one
+SELECT * FROM request WHERE issue_node_id = $1 AND issue_node_id <> '' LIMIT 1;
+
+-- name: FindRequestByID :one
+SELECT * FROM request WHERE id = $1;
+
+-- name: LockRequest :one
+-- Serialises the updates of one request: two events about it never interleave.
+SELECT * FROM request WHERE id = $1 FOR UPDATE;
+
+-- name: MoveRequest :exec
+-- After a transfer. origin_project_id never changes: the author keeps seeing it.
+UPDATE request SET project_id = @project_id, repo_owner = @repo_owner, repo_name = @repo_name,
+    issue_number = @issue_number, issue_node_id = @issue_node_id
+WHERE id = @id;
+
+-- name: SetRequestStatus :exec
+UPDATE request SET status = $2 WHERE id = $1;
+
+-- name: InsertRequestStatus :exec
+INSERT INTO request_status (request_id, status) VALUES ($1, $2);
+
+-- name: ListRequestStatus :many
+SELECT status, at FROM request_status WHERE request_id = $1 ORDER BY at, id;
+
+-- name: RecordWebhookDelivery :execrows
+INSERT INTO webhook_delivery (delivery_id, event) VALUES ($1, $2) ON CONFLICT DO NOTHING;
+
+-- name: PruneWebhookDeliveries :exec
+DELETE FROM webhook_delivery WHERE received_at < $1;
+
+-- name: SetProjectSynced :exec
+UPDATE project SET synced_at = $2 WHERE id = $1;
 
 -- name: GetRequest :one
-SELECT r.*, c.title, c.state, c.state_reason, c.labels, u.name AS author_name
+SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
 WHERE r.id = $1;
 
 -- name: ListRequestsByAuthor :many
-SELECT r.*, c.title, c.state, c.state_reason, c.labels, u.name AS author_name
+SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
@@ -131,7 +190,7 @@ ORDER BY r.created_at DESC
 LIMIT 200;
 
 -- name: ListRequestsByProject :many
-SELECT r.*, c.title, c.state, c.state_reason, c.labels, u.name AS author_name
+SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id

@@ -16,6 +16,17 @@ func BodyMarker(requestID string) string {
 	return fmt.Sprintf("<!-- hublot:request v1 id=%s -->", requestID)
 }
 
+var markerRe = regexp.MustCompile(`^<!-- hublot:request v1 id=([0-9a-f-]{36}) -->`)
+
+// RequestMarker returns the request id of a body the portal wrote, or "". Only the very
+// start of the body counts: RenderBody escapes markers typed inside the answers.
+func RequestMarker(body string) string {
+	if m := markerRe.FindStringSubmatch(body); m != nil {
+		return m[1]
+	}
+	return ""
+}
+
 type BodyInput struct {
 	RequestID   string
 	Form        IssueForm

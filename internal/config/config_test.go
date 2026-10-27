@@ -5,6 +5,7 @@ package config
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 const minimal = `
@@ -13,8 +14,15 @@ database_url: postgres://x
 auth: {allowed_domains: [Example.com]}
 mail: {driver: log}
 storage: {dir: /tmp/x}
+forge: {github: {webhook_secret: s3cret}}
 projects:
   - {slug: shop, name: Shop, color: "#B9AEFF", vehicle: boat, repo: org/shop, kinds: {idea: feature.yml}}
+  - slug: app
+    name: App
+    color: "#FF9A62"
+    vehicle: plane
+    repo: org/app
+    status: {project: 12, options: {Todo: planned, In progress: in_progress}}
 `
 
 func TestDefaults(t *testing.T) {
@@ -31,6 +39,43 @@ func TestDefaults(t *testing.T) {
 	p, _ := c.Project("shop")
 	if c.FormFor(p, "idea") != "feature.yml" || c.FormFor(p, "problem") != "bug.yml" {
 		t.Error("per-project kinds override the defaults")
+	}
+	if c.Sync.ResyncInterval != time.Hour || p.Status != nil {
+		t.Errorf("sync: %v, status: %+v", c.Sync.ResyncInterval, p.Status)
+	}
+	app, _ := c.Project("app")
+	if app.Status.Field != "Status" || app.Status.Project != 12 || app.Status.Options["In progress"] != "in_progress" {
+		t.Errorf("status block: %+v", app.Status)
+	}
+}
+
+func TestSyncValidation(t *testing.T) {
+	_, err := Parse(`
+base_url: https://portal.example.com
+database_url: postgres://x
+auth: {allowed_domains: [example.com]}
+mail: {driver: log}
+storage: {dir: /tmp/x}
+sync: {resync_interval: 10s}
+projects:
+  - slug: shop
+    name: Shop
+    color: "#B9AEFF"
+    vehicle: boat
+    repo: org/shop
+    status: {options: {Done: shipped}}
+`)
+	if err == nil {
+		t.Fatal("expected errors")
+	}
+	for _, want := range []string{"webhook_secret is required", "resync_interval", "status.project",
+		`unknown status "shipped"`} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("missing %q in:\n%v", want, err)
+		}
+	}
+	if _, err := Parse(strings.Replace(minimal, "forge: {github: {webhook_secret: s3cret}}", "forge: {driver: fake}", 1)); err != nil {
+		t.Errorf("the fake forge needs no webhook secret: %v", err)
 	}
 }
 
@@ -64,6 +109,7 @@ func TestExampleConfigIsValid(t *testing.T) {
 	t.Setenv("HUBLOT_DATABASE_URL", "postgres://x")
 	t.Setenv("HUBLOT_GITHUB_APP_ID", "1")
 	t.Setenv("HUBLOT_GITHUB_INSTALLATION_ID", "2")
+	t.Setenv("HUBLOT_GITHUB_WEBHOOK_SECRET", "s3cret")
 	if _, err := Load("../../hublot.example.yaml"); err != nil {
 		t.Error(err)
 	}

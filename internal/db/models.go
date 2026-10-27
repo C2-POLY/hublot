@@ -161,14 +161,21 @@ type GroupMember struct {
 }
 
 type IssueCache struct {
-	RepoOwner   string
-	RepoName    string
-	IssueNumber int32
-	Title       string
-	State       string
-	StateReason string
-	Labels      []string
-	UpdatedAt   time.Time
+	RepoOwner      string
+	RepoName       string
+	IssueNumber    int32
+	Title          string
+	State          string
+	StateReason    string
+	Labels         []string
+	UpdatedAt      time.Time
+	NodeID         string
+	Milestone      string
+	IssueType      string
+	ProjectStatus  string
+	ClosedAt       *time.Time
+	IssueUpdatedAt *time.Time
+	DeletedAt      *time.Time
 }
 
 type LoginToken struct {
@@ -194,6 +201,7 @@ type Project struct {
 	Inbox           bool
 	Position        int32
 	Archived        bool
+	SyncedAt        *time.Time
 }
 
 type ProjectGrant struct {
@@ -216,6 +224,14 @@ type Request struct {
 	IssueNumber     int32
 	IssueNodeID     string
 	CreatedAt       time.Time
+	Status          string
+}
+
+type RequestStatus struct {
+	ID        int64
+	RequestID uuid.UUID
+	Status    string
+	At        time.Time
 }
 
 type UserGroup struct {
@@ -230,4 +246,10 @@ type UserSession struct {
 	CreatedAt  time.Time
 	ExpiresAt  time.Time
 	LastSeenAt time.Time
+}
+
+type WebhookDelivery struct {
+	DeliveryID string
+	Event      string
+	ReceivedAt time.Time
 }

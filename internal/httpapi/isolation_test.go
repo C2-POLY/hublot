@@ -21,6 +21,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -43,11 +44,16 @@ auth:
   bootstrap_owners: [boss@acme.test]
 mail: {driver: log}
 storage: {driver: fs, dir: %s}
-forge: {driver: fake}
+forge: {driver: fake, github: {webhook_secret: test-secret}}
 attachments: {max_bytes: 2048}
 projects:
   - {slug: shop, name: Shop, color: "#B9AEFF", vehicle: boat, repo: acme/shop}
-  - {slug: app, name: App, color: "#FF9A62", vehicle: plane, repo: acme/app}
+  - slug: app
+    name: App
+    color: "#FF9A62"
+    vehicle: plane
+    repo: acme/app
+    status: {project: 1, options: {Todo: planned, In progress: in_progress, Done: available}}
   - {slug: open, name: Open, color: "#7FD8B6", vehicle: train, repo: acme/open, reporters_see_all: true}
 `
 
@@ -56,7 +62,10 @@ var pngHeader = []byte("\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\
 type env struct {
 	t      *testing.T
 	srv    *httptest.Server
+	pool   *pgxpool.Pool
 	q      *db.Queries
+	portal *portal.Service
+	server *httpapi.Server
 	mailer *mail.Log
 	forge  *forge.Fake
 	cfg    *config.Config
@@ -90,11 +99,31 @@ func setup(t *testing.T) *env {
 	if err := p.SyncProjects(ctx); err != nil {
 		t.Fatal(err)
 	}
+	if p.Jobs, err = portal.NewJobs(p, true); err != nil {
+		t.Fatal(err)
+	}
+	if err := p.Jobs.Start(ctx); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { p.Jobs.Stop(context.Background()) })
+	// Let the resyncs queued at start finish, so they never race a test.
+	for deadline := time.Now().Add(10 * time.Second); ; time.Sleep(20 * time.Millisecond) {
+		var pending int
+		if err := pool.QueryRow(ctx, "SELECT count(*) FROM project WHERE synced_at IS NULL").Scan(&pending); err != nil {
+			t.Fatal(err)
+		}
+		if pending == 0 {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("the resyncs queued at start did not run")
+		}
+	}
 	mailer := &mail.Log{}
 	s := &httpapi.Server{Cfg: cfg, Auth: &auth.Service{Q: q, Mailer: mailer, Cfg: cfg}, Portal: p}
 	srv := httptest.NewServer(s.Handler())
 	t.Cleanup(srv.Close)
-	return &env{t: t, srv: srv, q: q, mailer: mailer, forge: fake, cfg: cfg}
+	return &env{t: t, srv: srv, pool: pool, q: q, portal: p, server: s, mailer: mailer, forge: fake, cfg: cfg}
 }
 
 // grant gives a role, creating the person if needed.
@@ -410,7 +439,7 @@ func TestFilingARequest(t *testing.T) {
 	eq(t, "view", fmt.Sprintf("%s %s %v %d %s", v.Status, v.Kind, v.Private, v.Number, v.Project.Slug), "received problem true 1 shop")
 
 	issue := e.forge.Created(forge.Repo{Owner: "acme", Name: "shop"})[0]
-	eq(t, "labels", issue.Labels, []string{"bug", "portal", "portal:private"})
+	eq(t, "labels", issue.Labels, []string{"bug", "portal", "portal:new", "portal:private"})
 	eq(t, "type", issue.Type, "Bug")
 	for _, want := range []string{"<!-- hublot:request v1 id=", "### Où ?\n\nRapports", "### Ce qui s'est passé\n\nTableaux coupés", "par marie (m***@acme.test)"} {
 		if !strings.Contains(issue.Body, want) {

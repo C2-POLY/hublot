@@ -1,4 +1,4 @@
-# Portal HTTP API (milestone 1)
+# Portal HTTP API (milestone 2)
 
 The SPA talks to the Go server under `/api`. All bodies are JSON (`application/json`)
 except attachment upload (`multipart/form-data`).
@@ -132,10 +132,53 @@ the reader's Hublot session.
   "number": 128,
   "createdAt": "2026-10-27T09:12:00Z",
   "author": {"name": "Marie"},
-  "attachments": [Attachment]
+  "attachments": [Attachment],
+  "history": [
+    {"status": "received", "at": "2026-10-27T09:12:00Z"},
+    {"status": "planned", "at": "2026-10-28T14:03:00Z"}
+  ]
 }
 ```
 
-`status` is one of `received`, `planned`, `in_progress`, `in_test`, `available`, `answered`, `closed`.
-Milestone 1 only produces `received` (open) and `closed`; the rest arrive with webhooks in milestone 2.
-`number` is the GitHub issue number, shown small, only to talk to a developer.
+`status` is one of `received`, `planned`, `in_progress`, `in_test`, `available`, `answered`, `closed`,
+computed from the GitHub issue each time it changes, first match wins:
+
+1. closed as completed → `answered` for a question, `available` otherwise; closed for any other reason
+   (not planned, duplicate) or deleted → `closed`;
+2. open, and the project maps the option of its GitHub Project status field (`status` in the project
+   configuration) → that status;
+3. open with a milestone → `planned`;
+4. open → `received`.
+
+`history` (detail only) lists the status changes, oldest first, starting with `received` at filing.
+`number` is the GitHub issue number, shown small, only to talk to a developer. After a transfer in
+GitHub, the request follows its issue: `project` and `number` are the new ones.
+
+## GitHub webhook
+
+`POST /webhooks/github`, outside `/api`: no session, no `X-Hublot` header. Configure it on the GitHub App
+with the secret `forge.github.webhook_secret` and the events `issues` and `projects_v2_item`.
+
+- `X-Hub-Signature-256` must be the HMAC-SHA256 of the raw body with the secret, or `401`.
+- `X-GitHub-Event` and `X-GitHub-Delivery` are required (`400` otherwise, or for a malformed payload).
+  Bodies above 5 MB answer `413`.
+- `202 {"status": "queued"}`: the delivery id is recorded and its job queued in the same transaction;
+  the cache and statuses are updated in the background.
+- `200 {"status": "duplicate"}`: a delivery id already received (a redelivery); nothing is queued.
+- `204`: an event the portal does not follow (`ping`, pull requests, Projects items that are not issues).
+
+Only issues linked to a request are cached. A periodic resync (`sync.resync_interval`, 1 hour by default)
+and `hublot resync` repair what a lost delivery missed.
+
+## Development: fake forge
+
+Only when `forge.driver` is `fake` (never mounted with `github`), act as someone working in GitHub:
+
+`POST /dev/fake/issues/{owner}/{repo}/{number}` with any of
+
+```json
+{"state": "closed", "state_reason": "completed", "labels": ["portal", "bug"], "milestone": "v2.1", "project_status": "In progress"}
+```
+
+changes the in-memory issue and queues the same job a webhook would → `202` with the issue, `404` for an
+issue the fake forge does not hold (it forgets them on restart). `milestone: ""` removes the milestone.

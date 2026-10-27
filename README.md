@@ -23,17 +23,17 @@ and [`docs/design/maquettes/`](docs/design/maquettes/). The HTTP API is in [`doc
 
 ## Stack
 
-Go (chi, pgx + sqlc, goose, go-github + ghinstallation) and React/Vite/TypeScript
+Go (chi, pgx + sqlc, goose, River, go-github + ghinstallation) and React/Vite/TypeScript
 (Tailwind, TanStack Query, react-i18next), shipped as one binary in one Docker image,
 with PostgreSQL and S3-compatible storage.
 
 ```
-cmd/hublot          CLI: serve, migrate, user, group, grant
+cmd/hublot          CLI: serve, migrate, user, group, grant, resync
 internal/authz      the single authorization function Can(subject, action, resource)
 internal/auth       magic links and sessions
-internal/portal     projects, requests, attachments (every call goes through authz)
+internal/portal     projects, requests, attachments (every call goes through authz), GitHub sync jobs
 internal/forge      GitHub adapter (GitHub App), fake forge for development, issue forms
-internal/httpapi    JSON API, attachment links, SPA serving
+internal/httpapi    JSON API, attachment links, GitHub webhook, SPA serving
 internal/db         migrations and sqlc queries
 web/                the SPA
 deploy/dev          development configuration and sample issue forms
@@ -68,12 +68,37 @@ make lint
 Ports taken on your machine? `make dev API_PORT=8090 WEB_PORT=5180 PG_PORT=5439`
 (use the same values for `web-dev` and `seed`).
 
+Without GitHub, move a request along as a developer would (fake forge only, see
+[`docs/api.md`](docs/api.md)):
+
+```bash
+curl -X POST localhost:8080/dev/fake/issues/acme/boutique/1 -d '{"milestone": "v2.1"}'
+curl -X POST localhost:8080/dev/fake/issues/acme/boutique/1 -d '{"state": "closed", "state_reason": "completed"}'
+```
+
 ## Configure
 
 Copy [`hublot.example.yaml`](hublot.example.yaml). Projects, allowed domains, request kinds
 and their issue forms are configuration, never code. `${VAR}` references are read from the
 environment so secrets stay out of the file. To connect GitHub, create a GitHub App with:
-Issues read/write, Metadata read, Contents read, and install it on the organisation.
+Issues read/write, Metadata read, Contents read, organisation Projects read, and install it
+on the organisation.
+
+The portal follows GitHub through the App webhook. In the App settings, set the webhook URL
+to `{base_url}/webhooks/github`, a random secret (the same value as
+`forge.github.webhook_secret`, e.g. `openssl rand -hex 32`), and subscribe to the **Issues**
+and **Projects v2 item** events. Deliveries are verified, deduplicated by their id and
+processed in the background (River jobs, in Postgres). A periodic resync
+(`sync.resync_interval`) repairs what a lost delivery missed; to re-read every portal issue
+by hand, after an outage or a configuration change:
+
+```bash
+hublot resync                    # every project
+hublot resync -project online-shop
+```
+
+A project can take its detailed status (in progress, in test…) from a single-select field
+of an organisation Project: see `status` in the example configuration.
 
 Give access from the command line until the admin screens exist:
 

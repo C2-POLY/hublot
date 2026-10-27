@@ -22,6 +22,13 @@ storage:
 forge:
   driver: fake
   fake_dir: ${HUBLOT_FAKE_FORMS}
+  github:
+    # Signs test deliveries to POST /webhooks/github. With the fake forge,
+    # POST /dev/fake/issues/{owner}/{repo}/{number} changes an issue without signing.
+    webhook_secret: dev-webhook-secret
+
+sync:
+  resync_interval: 1h
 
 projects:
   - slug: boutique
@@ -36,6 +43,9 @@ projects:
     color: "#FF9A62"
     vehicle: plane
     repo: acme/app-mobile
+    status:
+      project: 1
+      options: {Todo: planned, In progress: in_progress, In review: in_test, Done: available}
   - slug: outil-interne
     name: Outil interne
     hint: Le back-office
