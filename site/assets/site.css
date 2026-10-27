@@ -39,6 +39,11 @@ section[id] { scroll-margin-top: 16px; }
 .lead { font-size: 19px; line-height: 1.5; }
 .pill { align-self: flex-start; padding: 7px 14px; border: 2.5px solid var(--ink); border-radius: 999px; font-weight: 700; font-size: 14px; }
 
+/* Not in the current version yet: keeps the page honest while it shows where Hublot is going. */
+.soon { display: inline-block; margin-left: 6px; padding: 1px 8px; border: 2px solid currentColor; border-radius: 999px; font-family: var(--body); font-size: 12px; font-weight: 700; letter-spacing: 0; line-height: 1.5; vertical-align: middle; white-space: nowrap; }
+.version-note { font-size: 15px; color: var(--ink-2); }
+.terminal-note { margin-top: 14px; font-size: 15px; line-height: 1.5; }
+
 /* Buttons */
 .btn { box-sizing: border-box; display: inline-flex; align-items: center; gap: 8px; border: 3px solid var(--ink); text-decoration: none; font-weight: 700; }
 .btn-sm { height: 46px; padding: 0 16px; border-radius: 12px; font-size: 15px; }

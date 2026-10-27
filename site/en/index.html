@@ -42,6 +42,7 @@
       <span class="pill bg-mint">Open source · AGPL-3.0</span>
       <h1>Every project travels its own way. Everyone looks through the same porthole.</h1>
       <p>One product, one vehicle, one colour. Your team follows every journey without a GitHub account, while GitHub stays at the controls.</p>
+      <p class="version-note">Hublot is at version 0.1. Anything marked “Soon” arrives in the next versions.</p>
     </div>
     <div>
       <a class="btn btn-lg btn-yellow shadow-5" href="#heberger">Get on board</a>
@@ -172,7 +173,7 @@
     <div class="grid grid-3">
       <article class="step bg-lavender"><span class="num">1</span><h3>Connect GitHub</h3><p>Install the GitHub app on your organisation and pick the repositories of your products.</p></article>
       <article class="step bg-orange"><span class="num">2</span><h3>Invite your team</h3><p>Everyone signs in with their work e-mail and a magic link. No GitHub account, no password.</p></article>
-      <article class="step bg-mint"><span class="num">3</span><h3>Track it like a parcel</h3><p>Received, planned, in progress, in testing, shipped. Every step comes from GitHub, with nothing typed twice.</p></article>
+      <article class="step bg-mint"><span class="num">3</span><h3>Track it like a parcel <span class="soon">Soon</span></h3><p>Received, planned, in progress, in testing, shipped. Every step comes from GitHub, with nothing typed twice.</p></article>
     </div>
   </section>
 
@@ -181,18 +182,18 @@
       <h3>For your team</h3>
       <ul>
         <li>A request in two minutes, guided, from a computer or a phone.</li>
-        <li>An annotated screenshot, pasted or taken on the spot.</li>
-        <li>“Me too” instead of a duplicate.</li>
-        <li>What's new, explained in plain words.</li>
+        <li>A screenshot, pasted or taken on the spot. <span class="soon">Annotation soon</span></li>
+        <li>“Me too” instead of a duplicate. <span class="soon">Soon</span></li>
+        <li>What's new, explained in plain words. <span class="soon">Soon</span></li>
       </ul>
     </article>
     <article class="audience audience-dev">
       <h3>For developers</h3>
       <ul>
         <li>Nothing changes: issues, sub-issues, PRs, deployments.</li>
-        <li>Complete issues, with acceptance criteria and a way to verify.</li>
-        <li>Ready to hand over to a coding agent.</li>
-        <li>Triage for every repository in one place.</li>
+        <li>Complete issues, with acceptance criteria and a way to verify. <span class="soon">Soon</span></li>
+        <li>Ready to hand over to a coding agent. <span class="soon">Soon</span></li>
+        <li>Triage for every repository in one place. <span class="soon">Soon</span></li>
       </ul>
     </article>
   </section>
@@ -203,10 +204,10 @@
       <div class="grid grid-3">
         <article class="feature"><h3>All your products</h3><p>One repository and one colour per product, a single way in.</p></article>
         <article class="feature"><h3>Access per product</h3><p>Viewer, reporter, triager, manager: everyone sees what concerns them, nothing more.</p></article>
-        <article class="feature"><h3>Guided creation</h3><p>Features and issues filled in field by field, with a “ready” gauge.</p></article>
-        <article class="feature"><h3>What's coming</h3><p>A Now, Next, Later roadmap that everyone can read and vote on.</p></article>
-        <article class="feature"><h3>“Shipped” for real</h3><p>The final status is read from your GitHub deployments, not from a box someone ticked.</p></article>
-        <article class="feature"><h3>E-mails people actually read</h3><p>One sentence, one button. Everyone chooses what they receive.</p></article>
+        <article class="feature"><h3>Guided creation <span class="soon">Soon</span></h3><p>Features and issues filled in field by field, with a “ready” gauge.</p></article>
+        <article class="feature"><h3>What's coming <span class="soon">Soon</span></h3><p>A Now, Next, Later roadmap that everyone can read and vote on.</p></article>
+        <article class="feature"><h3>“Shipped” for real <span class="soon">Soon</span></h3><p>The final status is read from your GitHub deployments, not from a box someone ticked.</p></article>
+        <article class="feature"><h3>E-mails people actually read <span class="soon">Soon</span></h3><p>One sentence, one button. Everyone chooses what they receive.</p></article>
       </div>
     </div>
   </section>
@@ -226,7 +227,7 @@
   <section id="claude" class="bg-yellow band-top">
     <div class="wrap split">
       <div class="claude-text claude">
-        <span class="pill bg-white">Built-in MCP server</span>
+        <span class="pill bg-white">Built-in MCP server · soon</span>
         <h2 class="h2">One sentence to Claude, one feature ready.</h2>
         <p class="lead">Hublot ships with an MCP server. Ask Claude for a feature: it arrives with all its issues, filled in with the same fields as guided creation, and checked before it enters GitHub.</p>
         <ul>
@@ -257,14 +258,16 @@
       <div>
         <h2 class="h2" style="margin-bottom: 14px">On your server, in one command</h2>
         <p class="lead" style="margin-bottom: 18px">One Docker image, a Postgres database, S3-compatible storage for screenshots. Your data never leaves your server.</p>
-        <p style="font-weight: 700">The setup wizard creates the GitHub app for you.</p>
+        <p style="font-weight: 700">The setup wizard creates the GitHub app for you. <span class="soon">Soon</span></p>
       </div>
-      <div class="terminal">
+      <div>
+        <div class="terminal">
         <p>terminal</p>
         <pre>git clone https://github.com/et-technology-consulting/hublot.git
 cd hublot
-cp .env.example .env
-docker compose up -d</pre>
+docker compose up --build</pre>
+        </div>
+        <p class="terminal-note">Today this starts a trial instance: simulated forge, e-mails in Mailpit. Running it in production is described in the <a href="https://github.com/et-technology-consulting/hublot#readme">README</a>.</p>
       </div>
     </div>
   </section>
