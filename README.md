@@ -37,6 +37,7 @@ internal/httpapi    JSON API, attachment links, SPA serving
 internal/db         migrations and sqlc queries
 web/                the SPA
 deploy/dev          development configuration and sample issue forms
+site/               landing page (FR and EN), published to GitHub Pages by .github/workflows/pages.yml
 ```
 
 ## Try it
