@@ -95,7 +95,8 @@ func setup(t *testing.T) *env {
 	}
 	q := db.New(pool)
 	fake := forge.NewFake(os.DirFS("../../deploy/dev/forms"))
-	p := &portal.Service{Pool: pool, Q: q, Forge: fake, Store: storage.FS{Dir: cfg.Storage.Dir}, Cfg: cfg}
+	mailer := &mail.Log{}
+	p := &portal.Service{Pool: pool, Q: q, Forge: fake, Store: storage.FS{Dir: cfg.Storage.Dir}, Cfg: cfg, Mailer: mailer}
 	if err := p.SyncProjects(ctx); err != nil {
 		t.Fatal(err)
 	}
@@ -119,7 +120,6 @@ func setup(t *testing.T) *env {
 			t.Fatal("the resyncs queued at start did not run")
 		}
 	}
-	mailer := &mail.Log{}
 	s := &httpapi.Server{Cfg: cfg, Auth: &auth.Service{Q: q, Mailer: mailer, Cfg: cfg}, Portal: p}
 	srv := httptest.NewServer(s.Handler())
 	t.Cleanup(srv.Close)
@@ -163,10 +163,16 @@ func (e *env) login(email string) *client {
 	if st, _ := c.do("POST", "/api/auth/magic-link", map[string]string{"email": email}); st != http.StatusAccepted {
 		e.t.Fatalf("magic link for %s: %d", email, st)
 	}
+	// Status e-mails share the mailer: take the last sign-in link sent to this address.
+	var m []string
 	sent := e.mailer.Sent()
-	m := tokenRe.FindStringSubmatch(sent[len(sent)-1].Text)
+	for i := len(sent) - 1; i >= 0 && m == nil; i-- {
+		if sent[i].To == email {
+			m = tokenRe.FindStringSubmatch(sent[i].Text)
+		}
+	}
 	if m == nil {
-		e.t.Fatalf("no link in %q", sent[len(sent)-1].Text)
+		e.t.Fatalf("no sign-in link sent to %s", email)
 	}
 	token, _ := url.QueryUnescape(m[1])
 	if st, body := c.do("POST", "/api/auth/verify", map[string]string{"token": token}); st != http.StatusOK {

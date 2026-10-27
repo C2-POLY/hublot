@@ -69,6 +69,8 @@ func (s *Server) Handler() http.Handler {
 		r.Group(func(r chi.Router) {
 			r.Use(s.requireSession)
 			r.Get("/me", s.me)
+			r.Get("/me/preferences", s.preferences)
+			r.Patch("/me/preferences", s.setPreferences)
 			r.Get("/projects/{slug}/forms", s.forms)
 			r.Post("/attachments", s.uploadAttachment)
 			r.Get("/attachments/{id}", s.getAttachment)

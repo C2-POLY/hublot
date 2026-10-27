@@ -97,6 +97,29 @@ func (s *Server) me(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, s.meView(userFrom(r), subjectFrom(r)))
 }
 
+func (s *Server) preferences(w http.ResponseWriter, r *http.Request) {
+	writeJSON(w, http.StatusOK, portal.Preferences{NotifyStatus: userFrom(r).NotifyStatus})
+}
+
+func (s *Server) setPreferences(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		NotifyStatus *bool `json:"notifyStatus"`
+	}
+	if !decode(w, r, &in) {
+		return
+	}
+	if in.NotifyStatus == nil {
+		writeError(w, http.StatusUnprocessableEntity, "validation", map[string]string{"notifyStatus": "required"})
+		return
+	}
+	p, err := s.Portal.SetPreferences(r.Context(), userFrom(r).ID, portal.Preferences{NotifyStatus: *in.NotifyStatus})
+	if err != nil {
+		s.internal(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, p)
+}
+
 func (s *Server) forms(w http.ResponseWriter, r *http.Request) {
 	forms, err := s.Portal.Forms(r.Context(), subjectFrom(r), chi.URLParam(r, "slug"))
 	if err != nil {

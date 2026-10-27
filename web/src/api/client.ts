@@ -34,6 +34,10 @@ export interface Me {
   projects: Project[]
 }
 
+export interface Preferences {
+  notifyStatus: boolean
+}
+
 export type FormField =
   | {
       id: string
@@ -165,6 +169,8 @@ export const api = {
   verify: (token: string) => request<{ user: Me }>('POST', '/api/auth/verify', { token }, { silent401: true }),
   logout: () => request<void>('POST', '/api/auth/logout'),
   me: () => request<Me>('GET', '/api/me'),
+  preferences: () => request<Preferences>('GET', '/api/me/preferences'),
+  setPreferences: (body: Preferences) => request<Preferences>('PATCH', '/api/me/preferences', body),
   forms: (slug: string) => request<{ forms: Form[] }>('GET', `/api/projects/${encodeURIComponent(slug)}/forms`),
   uploadAttachment: (file: File) => {
     const fd = new FormData()

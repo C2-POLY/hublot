@@ -220,3 +220,12 @@ RETURNING object_key;
 -- name: MaxIssueNumber :one
 -- The fake forge continues from here after a restart, so numbers never collide.
 SELECT COALESCE(max(issue_number), 0)::int AS number FROM request WHERE repo_owner = $1 AND repo_name = $2;
+
+-- name: SetUserNotifyStatus :one
+UPDATE app_user SET notify_status = $2 WHERE id = $1 RETURNING notify_status;
+
+-- name: NotificationSent :one
+SELECT EXISTS (SELECT 1 FROM request_notification WHERE request_id = $1 AND status = $2);
+
+-- name: RecordNotification :exec
+INSERT INTO request_notification (request_id, status) VALUES ($1, $2) ON CONFLICT DO NOTHING;

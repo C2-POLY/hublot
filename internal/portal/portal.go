@@ -20,6 +20,7 @@ import (
 	"github.com/C2-POLY/hublot/internal/config"
 	"github.com/C2-POLY/hublot/internal/db"
 	"github.com/C2-POLY/hublot/internal/forge"
+	"github.com/C2-POLY/hublot/internal/mail"
 	"github.com/C2-POLY/hublot/internal/storage"
 )
 
@@ -44,6 +45,8 @@ type Service struct {
 	Cfg   *config.Config
 	// Jobs queues background work (NewJobs); following GitHub needs it.
 	Jobs *river.Client[pgx.Tx]
+	// Mailer sends the status e-mails (the notify_status job).
+	Mailer mail.Mailer
 
 	mu       sync.RWMutex
 	projects []db.Project

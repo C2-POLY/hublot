@@ -82,14 +82,13 @@ func (w *resyncWorker) Work(ctx context.Context, job *river.Job[ResyncProjectArg
 	return err
 }
 
-// notifyWorker is where status e-mails are sent from; until then it records the change.
 type notifyWorker struct {
 	river.WorkerDefaults[NotifyStatusArgs]
+	s *Service
 }
 
 func (w *notifyWorker) Work(ctx context.Context, job *river.Job[NotifyStatusArgs]) error {
-	slog.InfoContext(ctx, "request status changed", "request", job.Args.RequestID, "status", job.Args.Status)
-	return nil
+	return w.s.NotifyStatus(ctx, job.Args.RequestID, job.Args.Status)
 }
 
 // NewJobs builds the job queue client for s. With work, it runs the workers and the
@@ -102,7 +101,7 @@ func NewJobs(s *Service, work bool) (*river.Client[pgx.Tx], error) {
 		river.AddWorker(workers, &issueEventWorker{s: s})
 		river.AddWorker(workers, &projectItemWorker{s: s})
 		river.AddWorker(workers, &resyncWorker{s: s})
-		river.AddWorker(workers, &notifyWorker{})
+		river.AddWorker(workers, &notifyWorker{s: s})
 		cfg.Workers = workers
 		cfg.Queues = map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 4}}
 		every := s.Cfg.Sync.ResyncInterval

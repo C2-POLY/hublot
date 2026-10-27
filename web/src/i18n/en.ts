@@ -22,6 +22,7 @@ const en: Shape<typeof fr> = {
     newRequest: 'Request',
     account: 'My account, {{initials}}',
     language: 'Language',
+    preferences: 'My preferences',
     logout: 'Sign out',
   },
   footer: {
@@ -166,6 +167,14 @@ const en: Shape<typeof fr> = {
     notFoundTitle: 'Request not found.',
     notFoundText: 'It doesn’t exist, or it isn’t open to you.',
     backToList: 'Back to my requests',
+  },
+  preferences: {
+    title: 'My preferences',
+    notifications: 'Notifications',
+    notifyStatus: 'E-mail me when one of my requests moves forward',
+    notifyStatusHint: 'A short e-mail at each step: planned, in the works, available…',
+    saved: 'Saved.',
+    saveFailed: 'This setting could not be saved. Try again in a moment.',
   },
   notFound: {
     title: 'This page doesn’t exist.',

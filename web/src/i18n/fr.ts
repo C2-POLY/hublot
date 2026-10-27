@@ -21,6 +21,7 @@ const fr = {
     newRequest: 'Demande',
     account: 'Mon compte, {{initials}}',
     language: 'Langue',
+    preferences: 'Mes préférences',
     logout: 'Se déconnecter',
   },
   footer: {
@@ -165,6 +166,14 @@ const fr = {
     notFoundTitle: 'Demande introuvable.',
     notFoundText: 'Elle n’existe pas, ou elle ne vous est pas ouverte.',
     backToList: 'Revenir à mes demandes',
+  },
+  preferences: {
+    title: 'Mes préférences',
+    notifications: 'Notifications',
+    notifyStatus: 'Me prévenir par e-mail quand une de mes demandes avance',
+    notifyStatusHint: 'Un e-mail court à chaque étape : planifiée, en réalisation, disponible…',
+    saved: 'C’est enregistré.',
+    saveFailed: 'Ce réglage n’a pas pu être enregistré. Réessayez dans un instant.',
   },
   notFound: {
     title: 'Cette page n’existe pas.',

@@ -52,6 +52,18 @@ The token is never consumed by a GET, so mail scanners that prefetch links canno
 `vehicle` is one of `boat`, `submarine`, `train`, `plane`, `rocket`, `car`, `bus`.
 `inbox: true` marks the shared intake project shown as "Je ne sais pas" in the request flow.
 
+## Preferences
+
+| Method | Path | Body | Answer |
+|---|---|---|---|
+| `GET` | `/api/me/preferences` | — | `200 {"notifyStatus": true}` or `401` |
+| `PATCH` | `/api/me/preferences` | `{"notifyStatus": false}` | `200` with the stored preferences; `422` with `fields.notifyStatus` when missing; `401` |
+
+`notifyStatus` (default `true`): e-mail the user when one of their requests changes status. The e-mail is sent
+once per request and status, in the user's language, only while the request still has that status and the user
+may still see it (same rule as `GET /api/requests/{id}`). It carries the request title and a link to
+`/demandes/{id}`, never its content, and a link to the SPA route `/preferences`.
+
 ## Request forms
 
 `GET /api/projects/{slug}/forms` → `200 {"forms": [Form]}` (only when the user may create requests there).

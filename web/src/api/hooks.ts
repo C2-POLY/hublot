@@ -9,6 +9,10 @@ export function useMe() {
   return useQuery({ queryKey: ['me'], queryFn: api.me, retry: noRetryOnClientError, staleTime: 60_000 })
 }
 
+export function usePreferences() {
+  return useQuery({ queryKey: ['preferences'], queryFn: api.preferences, retry: noRetryOnClientError })
+}
+
 export function useMyRequests() {
   return useQuery({ queryKey: ['requests', 'mine'], queryFn: api.myRequests, retry: noRetryOnClientError })
 }

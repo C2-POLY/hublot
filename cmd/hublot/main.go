@@ -106,7 +106,8 @@ func serve(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, q *db.Qu
 	if err != nil {
 		return err
 	}
-	p := &portal.Service{Pool: pool, Q: q, Forge: f, Store: store, Cfg: cfg}
+	mailer := newMailer(cfg)
+	p := &portal.Service{Pool: pool, Q: q, Forge: f, Store: store, Cfg: cfg, Mailer: mailer}
 	if err := p.SyncProjects(ctx); err != nil {
 		return err
 	}
@@ -123,7 +124,7 @@ func serve(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, q *db.Qu
 	}
 	srv := &httpapi.Server{
 		Cfg:    cfg,
-		Auth:   &auth.Service{Q: q, Mailer: newMailer(cfg), Cfg: cfg},
+		Auth:   &auth.Service{Q: q, Mailer: mailer, Cfg: cfg},
 		Portal: p,
 		Web:    webFS,
 	}

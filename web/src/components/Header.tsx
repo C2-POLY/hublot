@@ -135,6 +135,9 @@ function AccountMenu({ me, initials: ini, staff }: { me: Me; initials: string; s
               })}
             </div>
           </fieldset>
+          <Link to="/preferences" onClick={() => setOpen(false)} className="btn-light h-11 px-4">
+            {t('nav.preferences')}
+          </Link>
           <button type="button" onClick={() => void logout()} className="btn-dark h-11 px-4">
             {t('nav.logout')}
           </button>

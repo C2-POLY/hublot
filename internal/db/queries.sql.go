@@ -223,7 +223,7 @@ const createUser = `-- name: CreateUser :one
 INSERT INTO app_user (email, name, org_role, lang)
 VALUES ($1, $2, $3, $4)
 ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, org_role = EXCLUDED.org_role
-RETURNING id, email, name, org_role, lang, suspended, created_at, last_login_at
+RETURNING id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status
 `
 
 type CreateUserParams struct {
@@ -250,6 +250,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AppUser
 		&i.Suspended,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.NotifyStatus,
 	)
 	return i, err
 }
@@ -547,7 +548,7 @@ func (q *Queries) GetRequest(ctx context.Context, id uuid.UUID) (GetRequestRow, 
 }
 
 const getSessionUser = `-- name: GetSessionUser :one
-SELECT u.id, u.email, u.name, u.org_role, u.lang, u.suspended, u.created_at, u.last_login_at FROM user_session s JOIN app_user u ON u.id = s.user_id
+SELECT u.id, u.email, u.name, u.org_role, u.lang, u.suspended, u.created_at, u.last_login_at, u.notify_status FROM user_session s JOIN app_user u ON u.id = s.user_id
 WHERE s.token_hash = $1 AND s.expires_at > now() AND NOT u.suspended
 `
 
@@ -563,13 +564,14 @@ func (q *Queries) GetSessionUser(ctx context.Context, tokenHash []byte) (AppUser
 		&i.Suspended,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.NotifyStatus,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
 
-SELECT id, email, name, org_role, lang, suspended, created_at, last_login_at FROM app_user WHERE id = $1
+SELECT id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status FROM app_user WHERE id = $1
 `
 
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -585,12 +587,13 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (AppUser, error) {
 		&i.Suspended,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.NotifyStatus,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, name, org_role, lang, suspended, created_at, last_login_at FROM app_user WHERE email = $1
+SELECT id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status FROM app_user WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AppUser, error) {
@@ -605,6 +608,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AppUser, er
 		&i.Suspended,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.NotifyStatus,
 	)
 	return i, err
 }
@@ -1027,12 +1031,42 @@ func (q *Queries) MoveRequest(ctx context.Context, arg MoveRequestParams) error 
 	return err
 }
 
+const notificationSent = `-- name: NotificationSent :one
+SELECT EXISTS (SELECT 1 FROM request_notification WHERE request_id = $1 AND status = $2)
+`
+
+type NotificationSentParams struct {
+	RequestID uuid.UUID
+	Status    string
+}
+
+func (q *Queries) NotificationSent(ctx context.Context, arg NotificationSentParams) (bool, error) {
+	row := q.db.QueryRow(ctx, notificationSent, arg.RequestID, arg.Status)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const pruneWebhookDeliveries = `-- name: PruneWebhookDeliveries :exec
 DELETE FROM webhook_delivery WHERE received_at < $1
 `
 
 func (q *Queries) PruneWebhookDeliveries(ctx context.Context, receivedAt time.Time) error {
 	_, err := q.db.Exec(ctx, pruneWebhookDeliveries, receivedAt)
+	return err
+}
+
+const recordNotification = `-- name: RecordNotification :exec
+INSERT INTO request_notification (request_id, status) VALUES ($1, $2) ON CONFLICT DO NOTHING
+`
+
+type RecordNotificationParams struct {
+	RequestID uuid.UUID
+	Status    string
+}
+
+func (q *Queries) RecordNotification(ctx context.Context, arg RecordNotificationParams) error {
+	_, err := q.db.Exec(ctx, recordNotification, arg.RequestID, arg.Status)
 	return err
 }
 
@@ -1101,6 +1135,22 @@ type SetRequestStatusParams struct {
 func (q *Queries) SetRequestStatus(ctx context.Context, arg SetRequestStatusParams) error {
 	_, err := q.db.Exec(ctx, setRequestStatus, arg.ID, arg.Status)
 	return err
+}
+
+const setUserNotifyStatus = `-- name: SetUserNotifyStatus :one
+UPDATE app_user SET notify_status = $2 WHERE id = $1 RETURNING notify_status
+`
+
+type SetUserNotifyStatusParams struct {
+	ID           uuid.UUID
+	NotifyStatus bool
+}
+
+func (q *Queries) SetUserNotifyStatus(ctx context.Context, arg SetUserNotifyStatusParams) (bool, error) {
+	row := q.db.QueryRow(ctx, setUserNotifyStatus, arg.ID, arg.NotifyStatus)
+	var notify_status bool
+	err := row.Scan(&notify_status)
+	return notify_status, err
 }
 
 const touchSession = `-- name: TouchSession :exec
@@ -1275,7 +1325,7 @@ VALUES ($1, $2, $3, $4, now())
 ON CONFLICT (email) DO UPDATE
 SET last_login_at = now(),
     org_role = CASE WHEN EXCLUDED.org_role = 'owner' THEN 'owner'::org_role ELSE app_user.org_role END
-RETURNING id, email, name, org_role, lang, suspended, created_at, last_login_at
+RETURNING id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status
 `
 
 type UpsertUserOnLoginParams struct {
@@ -1302,6 +1352,7 @@ func (q *Queries) UpsertUserOnLogin(ctx context.Context, arg UpsertUserOnLoginPa
 		&i.Suspended,
 		&i.CreatedAt,
 		&i.LastLoginAt,
+		&i.NotifyStatus,
 	)
 	return i, err
 }

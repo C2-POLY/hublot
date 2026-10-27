@@ -123,14 +123,15 @@ func (e ProjectRole) Valid() bool {
 }
 
 type AppUser struct {
-	ID          uuid.UUID
-	Email       string
-	Name        string
-	OrgRole     OrgRole
-	Lang        string
-	Suspended   bool
-	CreatedAt   time.Time
-	LastLoginAt *time.Time
+	ID           uuid.UUID
+	Email        string
+	Name         string
+	OrgRole      OrgRole
+	Lang         string
+	Suspended    bool
+	CreatedAt    time.Time
+	LastLoginAt  *time.Time
+	NotifyStatus bool
 }
 
 type Attachment struct {
@@ -225,6 +226,12 @@ type Request struct {
 	IssueNodeID     string
 	CreatedAt       time.Time
 	Status          string
+}
+
+type RequestNotification struct {
+	RequestID uuid.UUID
+	Status    string
+	SentAt    time.Time
 }
 
 type RequestStatus struct {
