@@ -20,7 +20,8 @@ import (
 // Triage (PRD §5 V1): the requests nobody classified yet, across every project the person
 // may triage, and the actions that classify them. The triage state lives in GitHub (the
 // label portal:new); each action is written to GitHub first, then applied to the cache
-// the way a webhook would be.
+// the way a webhook would be. Once GitHub accepted the write, the action is audited even
+// when the local step fails (details.local_error), since it happened in GitHub.
 
 // Triage actions, as in POST /api/triage/{id}/{action}.
 const (
@@ -120,9 +121,11 @@ func (s *Service) Triage(ctx context.Context, sub authz.Subject, id uuid.UUID, a
 		details["via_org_role"] = true
 	}
 
+	// Each action writes to GitHub and returns the local step that follows.
+	var local func() error
 	switch action {
 	case TriageAccept:
-		err = s.updateIssue(ctx, repo, int(r.IssueNumber), forge.IssueUpdate{RemoveLabels: []string{forge.LabelNew}})
+		local, err = s.updateIssue(ctx, repo, int(r.IssueNumber), forge.IssueUpdate{RemoveLabels: []string{forge.LabelNew}})
 	case TriagePrivate:
 		if in.Private == nil {
 			return nil, &ValidationError{Fields: map[string]string{"private": "required"}}
@@ -132,38 +135,45 @@ func (s *Service) Triage(ctx context.Context, sub authz.Subject, id uuid.UUID, a
 		if *in.Private {
 			up = forge.IssueUpdate{AddLabels: []string{forge.LabelPrivate}}
 		}
-		err = s.updateIssue(ctx, repo, int(r.IssueNumber), up)
+		local, err = s.updateIssue(ctx, repo, int(r.IssueNumber), up)
 	case TriageClose:
 		if !slices.Contains(closeReasons, in.Reason) {
 			return nil, &ValidationError{Fields: map[string]string{"reason": "invalid"}}
 		}
 		details["reason"] = in.Reason
-		err = s.updateIssue(ctx, repo, int(r.IssueNumber), forge.IssueUpdate{
+		local, err = s.updateIssue(ctx, repo, int(r.IssueNumber), forge.IssueUpdate{
 			State: "closed", StateReason: in.Reason, RemoveLabels: []string{forge.LabelNew},
 		})
 	case TriageKind:
 		details["from"], details["to"] = r.Kind, in.Kind
-		err = s.changeKind(ctx, p, r, in.Kind)
+		local, err = s.changeKind(ctx, p, r, in.Kind)
 	case TriageTransfer:
 		var to db.Project
 		if to, err = s.transferTarget(sub, ar, in.Project); err != nil {
 			return nil, err
 		}
 		details["from"], details["to"] = p.Slug, to.Slug
-		err = s.transfer(ctx, r, to)
+		local, err = s.transfer(ctx, r, to)
 	default:
 		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
-
+	localErr := local()
+	if localErr != nil {
+		details["local_error"] = true
+	}
 	raw, err := json.Marshal(details)
 	if err != nil {
 		return nil, err
 	}
-	if err := s.audit(ctx, sub.UserID, "triage."+action, "request", id.String(), raw); err != nil {
-		return nil, err
+	// The write happened in GitHub: audit it even when the request was cancelled meanwhile.
+	if err := s.audit(context.WithoutCancel(ctx), sub.UserID, "triage."+action, "request", id.String(), raw); err != nil {
+		return nil, errors.Join(localErr, err)
+	}
+	if localErr != nil {
+		return nil, localErr
 	}
 	updated, err := s.Q.GetRequest(ctx, id)
 	if err != nil {
@@ -175,33 +185,34 @@ func (s *Service) Triage(ctx context.Context, sub authz.Subject, id uuid.UUID, a
 	return nil, nil
 }
 
-// updateIssue writes a change to GitHub, then applies the issue GitHub answered with.
-func (s *Service) updateIssue(ctx context.Context, repo forge.Repo, number int, up forge.IssueUpdate) error {
+// updateIssue writes a change to GitHub; the local step applies the issue GitHub answered with.
+func (s *Service) updateIssue(ctx context.Context, repo forge.Repo, number int, up forge.IssueUpdate) (func() error, error) {
 	issue, err := s.Forge.UpdateIssue(ctx, repo, number, up)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return s.applyIssue(ctx, repo, issue, nil)
+	return func() error { return s.applyIssue(ctx, repo, issue, nil) }, nil
 }
 
 // changeKind swaps the labels of the old kind's form for the new one's, sets the issue
-// type (issue_types, else the new form's type, else unchanged), then the request's kind.
-func (s *Service) changeKind(ctx context.Context, p db.Project, r db.GetRequestRow, kind string) error {
+// type (issue_types, else the new form's type, else unchanged); the local step sets the
+// request's kind.
+func (s *Service) changeKind(ctx context.Context, p db.Project, r db.GetRequestRow, kind string) (func() error, error) {
 	if !slices.Contains(config.Kinds, kind) {
-		return &ValidationError{Fields: map[string]string{"kind": "invalid"}}
+		return nil, &ValidationError{Fields: map[string]string{"kind": "invalid"}}
 	}
 	repo := forge.Repo{Owner: r.RepoOwner, Name: r.RepoName}
 	forms, err := s.Forge.IssueForms(ctx, repo)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	cp, _ := s.Cfg.Project(p.Slug)
 	next, ok := forms[s.Cfg.FormFor(cp, kind)]
 	if !ok {
-		return &ValidationError{Fields: map[string]string{"kind": "invalid"}}
+		return nil, &ValidationError{Fields: map[string]string{"kind": "invalid"}}
 	}
 	if kind == r.Kind {
-		return nil
+		return func() error { return nil }, nil
 	}
 	up := forge.IssueUpdate{AddLabels: next.Labels, Type: next.Type}
 	if t := s.Cfg.IssueTypes[kind]; t != "" {
@@ -214,14 +225,16 @@ func (s *Service) changeKind(ctx context.Context, p db.Project, r db.GetRequestR
 	}
 	issue, err := s.Forge.UpdateIssue(ctx, repo, int(r.IssueNumber), up)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	// The kind is the portal's own data; set it before the cache path recomputes the
-	// status, which depends on it (a closed question is answered, not available).
-	if err := s.Q.SetRequestKind(ctx, db.SetRequestKindParams{ID: r.ID, Kind: kind}); err != nil {
-		return err
-	}
-	return s.applyIssue(ctx, repo, issue, nil)
+	return func() error {
+		// The kind is the portal's own data; set it before the cache path recomputes the
+		// status, which depends on it (a closed question is answered, not available).
+		if err := s.Q.SetRequestKind(ctx, db.SetRequestKindParams{ID: r.ID, Kind: kind}); err != nil {
+			return err
+		}
+		return s.applyIssue(ctx, repo, issue, nil)
+	}, nil
 }
 
 // transferTarget resolves the destination of a transfer: a project the subject cannot
@@ -242,13 +255,15 @@ func (s *Service) transferTarget(sub authz.Subject, r authz.Request, slug string
 
 // transfer moves the issue to the destination's repository, then follows it as the
 // transferred webhook would: the request points at the new issue, origin_project_id stays.
-func (s *Service) transfer(ctx context.Context, r db.GetRequestRow, to db.Project) error {
+func (s *Service) transfer(ctx context.Context, r db.GetRequestRow, to db.Project) (func() error, error) {
 	moved, err := s.Forge.TransferIssue(ctx, r.IssueNodeID, repoOf(to))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	from := forge.Repo{Owner: r.RepoOwner, Name: r.RepoName}
-	return s.transferred(ctx, from, forge.Issue{Number: int(r.IssueNumber), NodeID: r.IssueNodeID}, repoOf(to), moved)
+	return func() error {
+		return s.transferred(ctx, from, forge.Issue{Number: int(r.IssueNumber), NodeID: r.IssueNodeID}, repoOf(to), moved)
+	}, nil
 }
 
 func projectRef(p db.Project) ProjectRef {

@@ -38,7 +38,13 @@ type Issue struct {
 	ClosedAt    *time.Time
 	// RequestID is read from the body marker: the portal request the issue was filed for,
 	// empty for an issue the portal did not write (or when the body was not available).
+	// Anyone can copy a marker: Forge.OwnIssue says whether the portal opened the issue.
 	RequestID string
+	// Author is the login of who opened the issue; AuthorBot is set for an App's bot account.
+	Author    string
+	AuthorBot bool
+	// ViaApp is the id of the GitHub App the issue was opened through, 0 when none or unknown.
+	ViaApp int64
 }
 
 // IssueUpdate changes an issue. Zero values leave the matching part unchanged.
@@ -67,6 +73,8 @@ type Forge interface {
 	UpdateIssue(ctx context.Context, repo Repo, number int, in IssueUpdate) (Issue, error)
 	// IssueTypes lists the names of the organisation's issue types.
 	IssueTypes(ctx context.Context, org string) ([]string, error)
+	// OwnIssue reports whether the portal itself opened the issue (as its GitHub App).
+	OwnIssue(i Issue) bool
 }
 
 var ErrNotFound = errors.New("forge: not found")

@@ -65,10 +65,10 @@ func ParseGitHubEvent(name string, body []byte) (ev Event, ok bool, err error) {
 	}
 	var p struct {
 		Action     string             `json:"action"`
-		Issue      *github.Issue      `json:"issue"`
+		Issue      *ghIssue           `json:"issue"`
 		Repository *github.Repository `json:"repository"`
 		Changes    struct {
-			NewIssue      *github.Issue      `json:"new_issue"`
+			NewIssue      *ghIssue           `json:"new_issue"`
 			NewRepository *github.Repository `json:"new_repository"`
 		} `json:"changes"`
 		Item *struct {
@@ -91,9 +91,9 @@ func ParseGitHubEvent(name string, body []byte) (ev Event, ok bool, err error) {
 	if p.Issue.IsPullRequest() {
 		return Event{}, false, nil
 	}
-	ev = Event{Kind: EventIssue, Action: p.Action, Repo: repoOf(p.Repository), Issue: fromGitHub(p.Issue)}
+	ev = Event{Kind: EventIssue, Action: p.Action, Repo: repoOf(p.Repository), Issue: p.Issue.issue()}
 	if p.Action == "transferred" && p.Changes.NewIssue != nil && p.Changes.NewRepository != nil {
-		to, moved := repoOf(p.Changes.NewRepository), fromGitHub(p.Changes.NewIssue)
+		to, moved := repoOf(p.Changes.NewRepository), p.Changes.NewIssue.issue()
 		ev.NewRepo, ev.NewIssue = &to, &moved
 	}
 	return ev, true, nil

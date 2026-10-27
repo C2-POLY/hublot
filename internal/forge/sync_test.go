@@ -5,6 +5,7 @@ package forge
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -55,7 +56,8 @@ func TestParseGitHubEvent(t *testing.T) {
 		"action": "milestoned",
 		"issue": {"number": 7, "node_id": "I_7", "title": "PDF", "state": "open", "body": "`+strings.ReplaceAll(markedBody, "\n", `\n`)+`",
 			"labels": [{"name": "portal"}], "milestone": {"title": "v2.1"}, "type": {"name": "Bug"},
-			"updated_at": "2026-10-27T10:00:00Z"},
+			"updated_at": "2026-10-27T10:00:00Z", "user": {"login": "hublot[bot]", "type": "Bot"},
+			"performed_via_github_app": {"id": 42}},
 		"repository": {"name": "shop", "full_name": "acme/shop", "owner": {"login": "acme"}}
 	}`))
 	if err != nil || !ok {
@@ -66,6 +68,7 @@ func TestParseGitHubEvent(t *testing.T) {
 	}
 	i := ev.Issue
 	if i.Number != 7 || i.Milestone != "v2.1" || i.Type != "Bug" || i.RequestID == "" || i.Labels[0] != "portal" ||
+		i.Author != "hublot[bot]" || !i.AuthorBot || i.ViaApp != 42 ||
 		!i.UpdatedAt.Equal(time.Date(2026, 10, 27, 10, 0, 0, 0, time.UTC)) {
 		t.Errorf("issue: %+v", i)
 	}
@@ -114,6 +117,9 @@ func TestFakeLifecycle(t *testing.T) {
 	f.CreateIssue(ctx, shop, NewIssue{Title: "Not ours", Labels: []string{"bug"}})
 	if created.RequestID == "" {
 		t.Error("request id read from the body")
+	}
+	if !f.OwnIssue(created) || f.OwnIssue(Issue{Author: "mallory"}) {
+		t.Error("the fake opens its issues as its own bot")
 	}
 
 	list, _ := f.ListPortalIssues(ctx, shop, time.Time{})
@@ -173,7 +179,8 @@ func fakeGitHub(t *testing.T) (*GitHub, *[]string) {
 	}
 	mux.HandleFunc("GET /api/v3/repos/acme/shop/issues/7", func(w http.ResponseWriter, r *http.Request) {
 		record(r)
-		io.WriteString(w, issue(7, `, "milestone": {"title": "v2.1"}, "type": {"name": "Bug"}`))
+		io.WriteString(w, issue(7, `, "milestone": {"title": "v2.1"}, "type": {"name": "Bug"},
+			"user": {"login": "hublot[bot]", "type": "Bot"}, "performed_via_github_app": {"id": 42, "slug": "hublot"}`))
 	})
 	mux.HandleFunc("GET /api/v3/repos/acme/shop/issues/8", func(w http.ResponseWriter, r *http.Request) {
 		record(r)
@@ -188,10 +195,12 @@ func fakeGitHub(t *testing.T) (*GitHub, *[]string) {
 		}
 		if q.Get("page") == "" {
 			w.Header().Set("Link", `<http://`+r.Host+r.URL.Path+`?page=2>; rel="next"`)
-			io.WriteString(w, "["+issue(1, "")+`, {"number": 2, "pull_request": {"url": "x"}}]`)
+			io.WriteString(w, "["+issue(1, `, "user": {"login": "hublot[bot]", "type": "Bot"}, "performed_via_github_app": {"id": 42}`)+
+				`, {"number": 2, "pull_request": {"url": "x"}}]`)
 			return
 		}
-		io.WriteString(w, "["+issue(3, `, "state": "closed", "state_reason": "completed", "closed_at": "2026-10-27T11:00:00Z"`)+"]")
+		io.WriteString(w, "["+issue(3, `, "state": "closed", "state_reason": "completed", "closed_at": "2026-10-27T11:00:00Z",
+			"user": {"login": "mallory", "type": "User"}`)+"]")
 	})
 	mux.HandleFunc("POST /api/v3/repos/acme/shop/issues/7/labels", func(w http.ResponseWriter, r *http.Request) {
 		record(r)
@@ -241,7 +250,12 @@ func fakeGitHub(t *testing.T) (*GitHub, *[]string) {
 			}
 			io.WriteString(w, `{"data": {"transferIssue": {"issue": {"number": 4}}}}`)
 		case in.Variables["number"] == float64(404):
-			io.WriteString(w, `{"data": null, "errors": [{"message": "Could not resolve to an Issue"}]}`)
+			io.WriteString(w, `{"data": {"repository": {"issue": null}}, "errors": [{"type": "NOT_FOUND",
+				"path": ["repository", "issue"], "message": "Could not resolve to an Issue with the number of 404."}]}`)
+		case in.Variables["number"] == float64(405):
+			io.WriteString(w, `{"data": null, "errors": [{"message": "Could not resolve to a Repository with the name 'acme/shop'."}]}`)
+		case in.Variables["number"] == float64(500):
+			io.WriteString(w, `{"data": null, "errors": [{"type": "RATE_LIMITED", "message": "API rate limit exceeded"}]}`)
 		default:
 			io.WriteString(w, `{"data": {"repository": {"issue": {"projectItems": {"nodes": [
 				{"project": {"number": 3}, "fieldValueByName": {"name": "Done"}},
@@ -250,7 +264,7 @@ func fakeGitHub(t *testing.T) (*GitHub, *[]string) {
 	})
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
-	g, err := newGitHub(srv.Client(), srv.URL+"/api/v3/")
+	g, err := newGitHub(srv.Client(), srv.URL+"/api/v3/", 42)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -280,6 +294,13 @@ func TestGitHubSync(t *testing.T) {
 	if len(list) != 2 || list[0].Number != 1 || list[1].Number != 3 || list[1].ClosedAt == nil {
 		t.Errorf("two pages, pull requests skipped: %+v", list)
 	}
+	if !g.OwnIssue(i) || len(list) != 2 || !g.OwnIssue(list[0]) || g.OwnIssue(list[1]) {
+		t.Errorf("own issues: opened through App 42 by its bot only: %+v %+v", i, list)
+	}
+	other, _ := newGitHub(http.DefaultClient, "", 7)
+	if other.OwnIssue(i) || (&GitHub{}).OwnIssue(Issue{AuthorBot: true}) {
+		t.Error("another App's issue, or no App configured, is not ours")
+	}
 
 	if st, err := g.ProjectStatus(ctx, shop, 7, 12, "Status"); err != nil || st != "In progress" {
 		t.Errorf("project status: %q %v", st, err)
@@ -287,8 +308,15 @@ func TestGitHubSync(t *testing.T) {
 	if st, _ := g.ProjectStatus(ctx, shop, 7, 99, "Status"); st != "" {
 		t.Errorf("not in that project: %q", st)
 	}
-	if _, err := g.ProjectStatus(ctx, shop, 404, 12, "Status"); err == nil || !strings.Contains(err.Error(), "Could not resolve") {
-		t.Errorf("graphql errors surface: %v", err)
+	// A deleted or transferred issue is not found, so its job stops retrying.
+	for _, n := range []int{404, 405} {
+		if _, err := g.ProjectStatus(ctx, shop, n, 12, "Status"); !errors.Is(err, ErrNotFound) {
+			t.Errorf("%d: not found: %v", n, err)
+		}
+	}
+	if _, err := g.ProjectStatus(ctx, shop, 500, 12, "Status"); err == nil || errors.Is(err, ErrNotFound) ||
+		!strings.Contains(err.Error(), "rate limit") {
+		t.Errorf("other graphql errors surface: %v", err)
 	}
 
 	moved, err := g.TransferIssue(ctx, "I_7", app)

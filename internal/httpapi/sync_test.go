@@ -348,3 +348,189 @@ func TestFakeForgeEndpoint(t *testing.T) {
 	}
 	eq(t, "issue untouched", e.fakeIssue(app, 1).State, "closed")
 }
+
+// place is where the request's issue is: "<repo name> <number>".
+func (e *env) place(id string) string {
+	e.t.Helper()
+	var p string
+	if err := e.pool.QueryRow(context.Background(), "SELECT repo_name || ' ' || issue_number FROM request WHERE id = $1", id).Scan(&p); err != nil {
+		e.t.Fatal(err)
+	}
+	return p
+}
+
+// process applies an issues event synchronously, as its job would.
+func (e *env) process(action string, repo forge.Repo, i forge.Issue) {
+	e.t.Helper()
+	if err := e.portal.ProcessIssueEvent(context.Background(), forge.Event{Kind: forge.EventIssue, Action: action, Repo: repo, Issue: i}); err != nil {
+		e.t.Fatal(err)
+	}
+}
+
+func TestCopiedMarker(t *testing.T) {
+	e := setup(t)
+	e.grant("marie@acme.test", "shop", "reporter")
+	marie := e.login("marie@acme.test")
+	ctx := context.Background()
+	open := forge.Repo{Owner: "acme", Name: "open"}
+	// gone takes an issue away without the portal hearing of it.
+	gone := func(number int) {
+		t.Helper()
+		if _, err := e.forge.TransferIssue(ctx, e.fakeIssue(shop, number).NodeID, forge.Repo{Owner: "acme", Name: "elsewhere"}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	// copyOf is an issue someone opened in a public repository with the request's marker.
+	copyOf := func(id string, number int, labels ...string) forge.Issue {
+		return forge.Issue{Number: number, NodeID: fmt.Sprintf("I_copy_%d", number), Title: "Cliquez ici", State: "open",
+			Labels: labels, UpdatedAt: time.Now(), RequestID: id, Author: "mallory"}
+	}
+	// own is an issue the portal's App opened (one it transferred keeps its author).
+	own := func(i forge.Issue) forge.Issue {
+		i.Author, i.AuthorBot, i.ViaApp = forge.FakeBot, true, forge.FakeAppID
+		return i
+	}
+
+	public := marie.file("shop", "Le PDF est illisible") // shop #1
+	gone(1)
+	e.process("opened", open, own(copyOf(public, 7, "bug")))
+	eq(t, "a marker without the portal label is ignored", e.place(public), "shop 1")
+	// An issue form may apply the portal label to anyone's issue.
+	e.process("opened", open, copyOf(public, 6, "bug", forge.LabelPortal))
+	eq(t, "a marker in an issue the portal did not open is ignored", e.place(public), "shop 1")
+	bot := copyOf(public, 6, "bug", forge.LabelPortal)
+	bot.Author, bot.AuthorBot = "other-app[bot]", true
+	e.process("opened", open, bot)
+	eq(t, "nor one another App opened", e.place(public), "shop 1")
+
+	deleted := marie.file("shop", "Export CSV") // shop #2
+	e.process("deleted", shop, e.fakeIssue(shop, 2))
+	gone(2)
+	e.process("opened", open, own(copyOf(deleted, 8, forge.LabelPortal)))
+	eq(t, "a deleted request's marker is ignored", e.place(deleted), "shop 2")
+	eq(t, "still closed", e.count("SELECT count(*) FROM request WHERE id = $1 AND status = 'closed'", deleted), 1)
+
+	st, body := marie.do("POST", "/api/requests", map[string]any{
+		"project": "shop", "kind": "question", "title": "Mon salaire", "private": true,
+		"fields": map[string]any{"question": "?"},
+	})
+	eq(t, "private request", st, http.StatusCreated)
+	var v struct{ ID string }
+	json.Unmarshal(body, &v)
+	gone(3)
+	e.process("opened", open, own(copyOf(v.ID, 9, forge.LabelPortal)))
+	eq(t, "a private request never follows a public issue", e.place(v.ID), "shop 3")
+	e.process("opened", open, own(copyOf(v.ID, 9, forge.LabelPortal, forge.LabelPrivate)))
+	eq(t, "but follows a private one", e.place(v.ID), "open 9")
+
+	e.process("opened", open, own(copyOf(public, 7, "bug", forge.LabelPortal)))
+	eq(t, "a portal issue carrying the marker is followed", e.place(public), "open 7")
+}
+
+func TestLateEventAfterTransfer(t *testing.T) {
+	e := setup(t)
+	e.grant("marie@acme.test", "shop", "reporter")
+	marie := e.login("marie@acme.test")
+	ctx := context.Background()
+	now := time.Now()
+
+	id := marie.file("shop", "Le PDF est illisible")
+	old := e.fakeIssue(shop, 1)
+	// GitHub keeps the node id of a transferred issue.
+	moved := forge.Issue{Number: 41, NodeID: old.NodeID, Title: old.Title, State: "open", Labels: old.Labels, UpdatedAt: now}
+	if err := e.portal.ProcessIssueEvent(ctx, forge.Event{Kind: forge.EventIssue, Action: "transferred",
+		Repo: shop, Issue: old, NewRepo: &app, NewIssue: &moved}); err != nil {
+		t.Fatal(err)
+	}
+	eq(t, "moved", e.place(id), "app 41")
+
+	late := old
+	late.Milestone, late.UpdatedAt = "v2", now.Add(-time.Minute)
+	e.process("milestoned", shop, late)
+	eq(t, "a late event from before the transfer does not move it back", e.place(id), "app 41")
+	eq(t, "no cache row at the old place", e.count("SELECT count(*) FROM issue_cache WHERE repo_name = 'shop'"), 0)
+
+	back := old
+	back.UpdatedAt = now.Add(time.Minute)
+	e.process("opened", shop, back)
+	eq(t, "a newer one does", e.place(id), "shop 1")
+}
+
+func TestPeriodicFullResync(t *testing.T) {
+	e := setup(t)
+	e.grant("paul@acme.test", "app", "reporter")
+	paul := e.login("paul@acme.test")
+	ctx := context.Background()
+	exec := func(sql string) {
+		t.Helper()
+		if _, err := e.pool.Exec(ctx, sql); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	id := paul.file("app", "Notification manquante")
+	status := "In progress"
+	e.forge.Change(app, 1, forge.FakeChange{ProjectStatus: &status})
+	// The projects_v2_item delivery was lost, and the issue itself did not change since
+	// the last resync: an incremental resync does not see it.
+	exec("UPDATE project SET synced_at = now() + interval '1 hour', full_synced_at = now() WHERE slug = 'app'")
+	n, err := e.portal.ResyncProject(ctx, "app", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	eq(t, "incremental", n, 0)
+	_, v := paul.request(id)
+	eq(t, "not repaired yet", v.Status, "received")
+
+	exec("UPDATE project SET synced_at = now() + interval '1 hour', full_synced_at = now() - interval '25 hours' WHERE slug = 'app'")
+	if n, err = e.portal.ResyncProject(ctx, "app", false); err != nil {
+		t.Fatal(err)
+	}
+	eq(t, "a day after the last full resync, every issue", n, 1)
+	_, v = paul.request(id)
+	eq(t, "repaired", v.Status, "in_progress")
+	eq(t, "full run recorded", e.count("SELECT count(*) FROM project WHERE slug = 'app' AND full_synced_at > now() - interval '1 minute'"), 1)
+}
+
+// lockProbe reports, on each project status read, whether the request row was locked.
+type lockProbe struct {
+	*forge.Fake
+	probe func()
+}
+
+func (l lockProbe) ProjectStatus(ctx context.Context, repo forge.Repo, number, project int, field string) (string, error) {
+	l.probe()
+	return l.Fake.ProjectStatus(ctx, repo, number, project, field)
+}
+
+func TestProjectStatusReadUnderLock(t *testing.T) {
+	e := setup(t)
+	e.grant("paul@acme.test", "app", "reporter")
+	paul := e.login("paul@acme.test")
+	ctx := context.Background()
+
+	id := paul.file("app", "Notification manquante")
+	reads, locked := 0, 0
+	e.portal.Forge = lockProbe{Fake: e.forge, probe: func() {
+		reads++
+		// Another writer would wait: the read and the write it leads to are one step.
+		if _, err := e.pool.Exec(ctx, "SELECT 1 FROM request WHERE id = $1 FOR UPDATE NOWAIT", id); err != nil {
+			locked++
+		}
+	}}
+	t.Cleanup(func() { e.portal.Forge = e.forge })
+
+	status := "In progress"
+	e.forge.Change(app, 1, forge.FakeChange{ProjectStatus: &status})
+	if _, err := e.portal.ResyncProject(ctx, "app", true); err != nil {
+		t.Fatal(err)
+	}
+	paul.eventually(id, "in_progress")
+	status = "Done"
+	e.forge.Change(app, 1, forge.FakeChange{ProjectStatus: &status})
+	if err := e.portal.ProcessProjectItem(ctx, e.fakeIssue(app, 1).NodeID); err != nil {
+		t.Fatal(err)
+	}
+	paul.eventually(id, "available")
+	eq(t, "every read under the request lock", fmt.Sprint(locked, "/", reads), "2/2")
+}

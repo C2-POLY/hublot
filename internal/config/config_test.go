@@ -40,8 +40,8 @@ func TestDefaults(t *testing.T) {
 	if c.FormFor(p, "idea") != "feature.yml" || c.FormFor(p, "problem") != "bug.yml" {
 		t.Error("per-project kinds override the defaults")
 	}
-	if c.Sync.ResyncInterval != time.Hour || p.Status != nil {
-		t.Errorf("sync: %v, status: %+v", c.Sync.ResyncInterval, p.Status)
+	if c.Sync.ResyncInterval != time.Hour || c.Sync.FullResyncInterval != 24*time.Hour || p.Status != nil {
+		t.Errorf("sync: %v %v, status: %+v", c.Sync.ResyncInterval, c.Sync.FullResyncInterval, p.Status)
 	}
 	app, _ := c.Project("app")
 	if app.Status.Field != "Status" || app.Status.Project != 12 || app.Status.Options["In progress"] != "in_progress" {
@@ -56,7 +56,7 @@ database_url: postgres://x
 auth: {allowed_domains: [example.com]}
 mail: {driver: log}
 storage: {dir: /tmp/x}
-sync: {resync_interval: 10s}
+sync: {resync_interval: 10s, full_resync_interval: 5s}
 projects:
   - slug: shop
     name: Shop
@@ -68,7 +68,7 @@ projects:
 	if err == nil {
 		t.Fatal("expected errors")
 	}
-	for _, want := range []string{"webhook_secret is required", "resync_interval", "status.project",
+	for _, want := range []string{"webhook_secret is required", "resync_interval must", "full_resync_interval must", "status.project",
 		`unknown status "shipped"`} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("missing %q in:\n%v", want, err)

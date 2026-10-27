@@ -231,11 +231,15 @@ with the secret `forge.github.webhook_secret` and the events `issues` and `proje
 - `204`: an event the portal does not follow (`ping`, pull requests, Projects items that are not issues).
 
 Only issues linked to a request are cached. A periodic resync (`sync.resync_interval`, 1 hour by default)
-and `hublot resync` repair what a lost delivery missed.
+and `hublot resync` repair what a lost delivery missed. The periodic resync reads the issues updated since
+its last run, and every portal issue once per `sync.full_resync_interval` (24 hours by default): a Projects
+field change does not touch the issue, so only that full run repairs a lost `projects_v2_item` delivery.
 
 ## Development: fake forge
 
-Only when `forge.driver` is `fake` (never mounted with `github`), act as someone working in GitHub:
+This endpoint exists only when `forge.driver` is `fake` (it is never mounted with `github`). It takes no
+authentication and no signature: it is for local development and tests, and must never be used in
+production. Act as someone working in GitHub:
 
 `POST /dev/fake/issues/{owner}/{repo}/{number}` with any of
 

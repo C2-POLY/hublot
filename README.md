@@ -70,8 +70,9 @@ make lint
 Ports taken on your machine? `make dev API_PORT=8090 WEB_PORT=5180 PG_PORT=5439`
 (use the same values for `web-dev` and `seed`).
 
-Without GitHub, move a request along as a developer would (fake forge only, see
-[`docs/api.md`](docs/api.md)):
+Without GitHub, move a request along as a developer would. `/dev/fake/...` exists only
+with `forge.driver: fake`, is unauthenticated, and must never be used in production
+(see [`docs/api.md`](docs/api.md)):
 
 ```bash
 curl -X POST localhost:8080/dev/fake/issues/acme/boutique/1 -d '{"milestone": "v2.1"}'
@@ -89,10 +90,14 @@ on the organisation.
 The portal follows GitHub through the App webhook. In the App settings, set the webhook URL
 to `{base_url}/webhooks/github`, a random secret (the same value as
 `forge.github.webhook_secret`, e.g. `openssl rand -hex 32`), and subscribe to the **Issues**
-and **Projects v2 item** events. Deliveries are verified, deduplicated by their id and
+and **Projects v2 item** events. Issue forms must not auto-apply the `portal` label:
+the portal applies it to the issues it opens, and follows a moved request only into an
+issue its App opened. Deliveries are verified, deduplicated by their id and
 processed in the background (River jobs, in Postgres). A periodic resync
-(`sync.resync_interval`) repairs what a lost delivery missed; to re-read every portal issue
-by hand, after an outage or a configuration change:
+(`sync.resync_interval`) repairs what a lost delivery missed, re-reading every portal issue
+once per `sync.full_resync_interval` (24 hours by default) so a lost Projects v2 item
+delivery is repaired too; to re-read every portal issue by hand, after an outage or a
+configuration change:
 
 ```bash
 hublot resync                    # every project

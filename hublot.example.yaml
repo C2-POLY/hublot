@@ -47,6 +47,9 @@ forge:
 sync:
   # Webhooks keep the cache fresh; this periodic resync repairs what a lost delivery missed.
   resync_interval: 1h
+  # Every this often, the resync re-reads every portal issue instead of the ones updated
+  # since the last run: the only way to repair a lost Projects v2 item delivery.
+  full_resync_interval: 24h
 
 # Which issue form of the repository (.github/ISSUE_TEMPLATE/) each request kind uses.
 kinds:

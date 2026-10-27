@@ -98,6 +98,9 @@ type GitHub struct {
 type Sync struct {
 	// ResyncInterval spaces the resyncs that repair what a lost webhook missed.
 	ResyncInterval time.Duration `yaml:"resync_interval"`
+	// FullResyncInterval spaces the resyncs that re-read every portal issue, the only
+	// ones that see a Project field change whose delivery was lost.
+	FullResyncInterval time.Duration `yaml:"full_resync_interval"`
 }
 
 type Project struct {
@@ -223,6 +226,9 @@ func (c *Config) defaults() {
 	if c.Sync.ResyncInterval == 0 {
 		c.Sync.ResyncInterval = time.Hour
 	}
+	if c.Sync.FullResyncInterval == 0 {
+		c.Sync.FullResyncInterval = 24 * time.Hour
+	}
 	for _, p := range c.Projects {
 		if p.Status != nil && p.Status.Field == "" {
 			p.Status.Field = "Status"
@@ -275,6 +281,9 @@ func (c *Config) validate() error {
 	}
 	if c.Sync.ResyncInterval < time.Minute {
 		errs = append(errs, errors.New("sync.resync_interval must be at least 1m"))
+	}
+	if c.Sync.FullResyncInterval < c.Sync.ResyncInterval {
+		errs = append(errs, errors.New("sync.full_resync_interval must be at least sync.resync_interval"))
 	}
 	if !slices.Contains([]string{"masked", "full", "hidden"}, c.Forge.AuthorEmail) {
 		errs = append(errs, fmt.Errorf("forge.author_email %q: use masked, full or hidden", c.Forge.AuthorEmail))

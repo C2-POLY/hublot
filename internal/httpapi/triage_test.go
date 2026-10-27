@@ -282,3 +282,27 @@ func TestTriageActions(t *testing.T) {
 			"SELECT count(*) FROM audit_log WHERE target_id = $1 AND details ? 'via_org_role'", id), 0)
 	})
 }
+
+func TestTriageAuditedWhenLocalStepFails(t *testing.T) {
+	e := setup(t)
+	e.grant("marie@acme.test", "shop", "reporter")
+	e.grant("tina@acme.test", "shop", "triager")
+	marie, tina := e.login("marie@acme.test"), e.login("tina@acme.test")
+	ctx := context.Background()
+	id := marie.file("shop", "Le PDF est illisible")
+
+	// The cache refuses every write: GitHub accepts the change, the local step fails.
+	for _, sql := range []string{
+		`CREATE FUNCTION cache_down() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'cache down'; END $$`,
+		`CREATE TRIGGER cache_down BEFORE INSERT OR UPDATE ON issue_cache FOR EACH ROW EXECUTE FUNCTION cache_down()`,
+	} {
+		if _, err := e.pool.Exec(ctx, sql); err != nil {
+			t.Fatal(err)
+		}
+	}
+	st, _ := tina.triage(id, "accept", nil)
+	eq(t, "local step failed", st, http.StatusInternalServerError)
+	eq(t, "written to GitHub", slices.Contains(e.fakeIssue(forge.Repo{Owner: "acme", Name: "shop"}, 1).Labels, forge.LabelNew), false)
+	eq(t, "audited all the same", e.count(
+		"SELECT count(*) FROM audit_log WHERE action = 'triage.accept' AND target_id = $1 AND details->>'local_error' = 'true'", id), 1)
+}

@@ -171,7 +171,9 @@ INSERT INTO webhook_delivery (delivery_id, event) VALUES ($1, $2) ON CONFLICT DO
 DELETE FROM webhook_delivery WHERE received_at < $1;
 
 -- name: SetProjectSynced :exec
-UPDATE project SET synced_at = $2 WHERE id = $1;
+UPDATE project SET synced_at = @synced_at,
+    full_synced_at = CASE WHEN @full_run::boolean THEN @synced_at ELSE full_synced_at END
+WHERE id = @id;
 
 -- name: GetRequest :one
 SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name
@@ -264,12 +266,14 @@ RETURNING previous_visit_at;
 
 -- name: ListRequestsMovedSince :many
 -- The author's requests whose status changed after @since, the latest change first.
+-- The first history row records the filing, not a change: a request just filed has not moved.
 SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name,
        m.at::timestamptz AS moved_at
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
-JOIN LATERAL (SELECT max(s.at) AS at FROM request_status s WHERE s.request_id = r.id) m ON true
+JOIN LATERAL (SELECT max(s.at) AS at FROM request_status s WHERE s.request_id = r.id
+              AND s.id > (SELECT min(f.id) FROM request_status f WHERE f.request_id = r.id)) m ON true
 WHERE r.author_id = @author_id AND m.at > @since::timestamptz
 ORDER BY m.at DESC
 LIMIT 50;

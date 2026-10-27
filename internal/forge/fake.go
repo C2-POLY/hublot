@@ -14,6 +14,12 @@ import (
 	"time"
 )
 
+// FakeBot and FakeAppID are the identity the fake forge opens its issues with.
+const (
+	FakeBot   = "hublot-dev[bot]"
+	FakeAppID = int64(1)
+)
+
 // Fake is an in-memory forge for local development and tests: issue forms are read
 // from a folder per repository (<owner>/<name>/*.yml, falling back to _default/*.yml)
 // and issues live in memory.
@@ -88,6 +94,9 @@ func (f *Fake) CreateIssue(ctx context.Context, repo Repo, in NewIssue) (Issue, 
 		Type:      in.Type,
 		UpdatedAt: time.Now(),
 		RequestID: RequestMarker(in.Body),
+		Author:    FakeBot,
+		AuthorBot: true,
+		ViaApp:    FakeAppID,
 	}
 	f.bodies[key] = append(f.bodies[key], in)
 	f.put(repo, &fakeIssue{Issue: issue, body: in.Body})
@@ -192,6 +201,10 @@ func (f *Fake) UpdateIssue(_ context.Context, repo Repo, number int, in IssueUpd
 
 func (f *Fake) IssueTypes(context.Context, string) ([]string, error) {
 	return slices.Clone(f.Types), nil
+}
+
+func (f *Fake) OwnIssue(i Issue) bool {
+	return i.AuthorBot && i.Author == FakeBot && i.ViaApp == FakeAppID
 }
 
 // FakeChange is what the development endpoint can change on a fake issue.

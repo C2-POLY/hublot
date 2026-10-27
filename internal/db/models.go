@@ -205,6 +205,7 @@ type Project struct {
 	Position        int32
 	Archived        bool
 	SyncedAt        *time.Time
+	FullSyncedAt    *time.Time
 }
 
 type ProjectGrant struct {

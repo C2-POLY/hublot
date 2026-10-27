@@ -7,12 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/riverqueue/river"
+	"github.com/riverqueue/river/rivertype"
 
 	"github.com/C2-POLY/hublot/internal/config"
 	"github.com/C2-POLY/hublot/internal/db"
@@ -95,13 +97,6 @@ func (s *Service) ProcessProjectItem(ctx context.Context, contentNodeID string) 
 		return nil
 	}
 	repo := forge.Repo{Owner: req.RepoOwner, Name: req.RepoName}
-	ps, err := s.Forge.ProjectStatus(ctx, repo, int(req.IssueNumber), st.Project, st.Field)
-	if errors.Is(err, forge.ErrNotFound) {
-		return nil
-	}
-	if err != nil {
-		return err
-	}
 	return s.inTx(ctx, func(q *db.Queries, tx pgx.Tx) error {
 		locked, err := q.LockRequest(ctx, req.ID)
 		if err != nil {
@@ -109,6 +104,15 @@ func (s *Service) ProcessProjectItem(ctx context.Context, contentNodeID string) 
 		}
 		if locked.RepoOwner != req.RepoOwner || locked.RepoName != req.RepoName || locked.IssueNumber != req.IssueNumber {
 			return nil // moved meanwhile: the event about the move brings the rest
+		}
+		// Read under the lock: the project status has no timestamp, so the last writer
+		// must also be the last reader, or an older read overwrites a newer one.
+		ps, err := s.Forge.ProjectStatus(ctx, repo, int(req.IssueNumber), st.Project, st.Field)
+		if errors.Is(err, forge.ErrNotFound) {
+			return nil
+		}
+		if err != nil {
+			return err
 		}
 		if err := q.SetIssueProjectStatus(ctx, db.SetIssueProjectStatusParams{
 			ProjectStatus: ps, RepoOwner: req.RepoOwner, RepoName: req.RepoName, IssueNumber: req.IssueNumber,
@@ -120,8 +124,10 @@ func (s *Service) ProcessProjectItem(ctx context.Context, contentNodeID string) 
 }
 
 // ResyncProject reads the portal issues of a project's repository and applies them:
-// every one when full (or on the first run), otherwise those updated since the last run.
-// It returns how many issues GitHub returned.
+// every one when full (or on the first run, or when the last full run is older than
+// sync.full_resync_interval), otherwise those updated since the last run. A Project
+// field change does not touch the issue, so only a full run repairs a lost
+// projects_v2_item delivery. It returns how many issues GitHub returned.
 func (s *Service) ResyncProject(ctx context.Context, slug string, full bool) (int, error) {
 	p, err := s.Q.GetProjectBySlug(ctx, slug)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -130,6 +136,7 @@ func (s *Service) ResyncProject(ctx context.Context, slug string, full bool) (in
 	if err != nil {
 		return 0, err
 	}
+	full = full || p.FullSyncedAt == nil || time.Since(*p.FullSyncedAt) >= s.Cfg.Sync.FullResyncInterval
 	var since time.Time
 	if !full && p.SyncedAt != nil {
 		since = p.SyncedAt.Add(-resyncOverlap)
@@ -142,20 +149,11 @@ func (s *Service) ResyncProject(ctx context.Context, slug string, full bool) (in
 	}
 	st := s.statusConfig(p.ID)
 	for _, issue := range issues {
-		var ps *string
-		if st != nil {
-			// A Project field change does not touch the issue: only a full resync is sure to see it.
-			v, err := s.Forge.ProjectStatus(ctx, repo, issue.Number, st.Project, st.Field)
-			if err != nil && !errors.Is(err, forge.ErrNotFound) {
-				return 0, err
-			}
-			ps = &v
-		}
-		if err := s.applyIssue(ctx, repo, issue, ps); err != nil {
+		if err := s.applyIssue(ctx, repo, issue, st); err != nil {
 			return 0, fmt.Errorf("resync %s#%d: %w", repo, issue.Number, err)
 		}
 	}
-	if err := s.Q.SetProjectSynced(ctx, db.SetProjectSyncedParams{ID: p.ID, SyncedAt: &started}); err != nil {
+	if err := s.Q.SetProjectSynced(ctx, db.SetProjectSyncedParams{ID: p.ID, SyncedAt: &started, FullRun: full}); err != nil {
 		return 0, err
 	}
 	if err := s.Q.PruneWebhookDeliveries(ctx, started.Add(-deliveryRetention)); err != nil {
@@ -173,9 +171,10 @@ func (s *Service) enqueueResyncAll(ctx context.Context) error {
 	return nil
 }
 
-// applyIssue updates the cache of a linked issue (and its project status when given),
-// following the issue when it now lives somewhere else, then recomputes the status.
-func (s *Service) applyIssue(ctx context.Context, repo forge.Repo, issue forge.Issue, projectStatus *string) error {
+// applyIssue updates the cache of a linked issue (and re-reads its project status when
+// st is given), following the issue when it now lives somewhere else, then recomputes
+// the status.
+func (s *Service) applyIssue(ctx context.Context, repo forge.Repo, issue forge.Issue, st *config.ProjectStatus) error {
 	req, err := s.findRequest(ctx, repo, issue)
 	if errors.Is(err, pgx.ErrNoRows) {
 		req, err = s.findMovedRequest(ctx, repo, issue)
@@ -192,15 +191,32 @@ func (s *Service) applyIssue(ctx context.Context, repo forge.Repo, issue forge.I
 			return err
 		}
 		if !at(locked, repo, issue.Number) {
+			// A snapshot older than the one cached where the request now is (a late
+			// event from before a transfer) never moves the request back.
+			c, err := q.GetIssueCache(ctx, db.GetIssueCacheParams{
+				RepoOwner: locked.RepoOwner, RepoName: locked.RepoName, IssueNumber: locked.IssueNumber,
+			})
+			if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+				return err
+			}
+			if err == nil && c.IssueUpdatedAt != nil && !issue.UpdatedAt.IsZero() && issue.UpdatedAt.Before(*c.IssueUpdatedAt) {
+				slog.WarnContext(ctx, "older snapshot of a moved issue, ignored", "request", req.ID, "repo", repo.String(), "number", issue.Number)
+				return nil
+			}
 			if err := s.move(ctx, q, locked, repo, issue); err != nil {
 				return err
 			}
 		} else if err := upsertCache(ctx, q, repo, issue); err != nil {
 			return err
 		}
-		if projectStatus != nil {
+		if st != nil {
+			// Read under the lock, as ProcessProjectItem does.
+			ps, err := s.Forge.ProjectStatus(ctx, repo, issue.Number, st.Project, st.Field)
+			if err != nil && !errors.Is(err, forge.ErrNotFound) {
+				return err
+			}
 			if err := q.SetIssueProjectStatus(ctx, db.SetIssueProjectStatusParams{
-				ProjectStatus: *projectStatus, RepoOwner: repo.Owner, RepoName: repo.Name, IssueNumber: int32(issue.Number),
+				ProjectStatus: ps, RepoOwner: repo.Owner, RepoName: repo.Name, IssueNumber: int32(issue.Number),
 			}); err != nil {
 				return err
 			}
@@ -266,16 +282,41 @@ func (s *Service) findRequest(ctx context.Context, repo forge.Repo, issue forge.
 
 // findMovedRequest finds the request of an issue through the marker of its body, for an
 // issue transferred without the portal hearing of it. A marker copied into another
-// issue must not steal the request: the request follows only if its recorded issue is
-// gone, or is this very issue (GitHub redirects a transferred issue).
+// issue must not steal the request: anyone can open an issue in a public repository
+// (and an issue form may apply labels), so the issue must have been opened by the portal
+// itself (its GitHub App) and carry the portal label (and portal:private for a private
+// request); a request whose issue was deleted stays
+// where it is; otherwise it follows only if its recorded issue is gone, or is this
+// very issue (GitHub redirects a transferred issue).
 func (s *Service) findMovedRequest(ctx context.Context, repo forge.Repo, issue forge.Issue) (db.Request, error) {
 	id, err := uuid.Parse(issue.RequestID)
 	if err != nil {
 		return db.Request{}, pgx.ErrNoRows
 	}
+	ignore := func(reason string) (db.Request, error) {
+		slog.WarnContext(ctx, "issue carries the marker of a request, ignored", "repo", repo.String(),
+			"number", issue.Number, "request", id, "reason", reason)
+		return db.Request{}, pgx.ErrNoRows
+	}
+	if !s.Forge.OwnIssue(issue) {
+		return ignore("not opened by the portal")
+	}
+	if !slices.Contains(issue.Labels, forge.LabelPortal) {
+		return ignore("not labelled " + forge.LabelPortal)
+	}
 	req, err := s.Q.FindRequestByID(ctx, id)
 	if err != nil {
 		return db.Request{}, err
+	}
+	c, err := s.Q.GetIssueCache(ctx, db.GetIssueCacheParams{RepoOwner: req.RepoOwner, RepoName: req.RepoName, IssueNumber: req.IssueNumber})
+	if err != nil {
+		return db.Request{}, err
+	}
+	if c.DeletedAt != nil {
+		return ignore("its issue was deleted")
+	}
+	if slices.Contains(c.Labels, forge.LabelPrivate) && !slices.Contains(issue.Labels, forge.LabelPrivate) {
+		return ignore("private request, not labelled " + forge.LabelPrivate)
 	}
 	current, err := s.Forge.GetIssue(ctx, forge.Repo{Owner: req.RepoOwner, Name: req.RepoName}, int(req.IssueNumber))
 	switch {
@@ -286,8 +327,7 @@ func (s *Service) findMovedRequest(ctx context.Context, repo forge.Repo, issue f
 	case current.NodeID == issue.NodeID:
 		return req, nil
 	}
-	slog.WarnContext(ctx, "issue carries the marker of another request, ignored", "repo", repo.String(), "number", issue.Number, "request", id)
-	return db.Request{}, pgx.ErrNoRows
+	return ignore("its issue still exists")
 }
 
 // move points a request at the issue's new place: the project whose repository it is
@@ -338,8 +378,14 @@ func (s *Service) recompute(ctx context.Context, q *db.Queries, tx pgx.Tx, id uu
 	if err := q.InsertRequestStatus(ctx, db.InsertRequestStatusParams{RequestID: id, Status: status}); err != nil {
 		return err
 	}
+	// Unique while queued or running only: request_notification already keeps one e-mail
+	// per (request, status), and a status that comes back (A, B, A) must be queued again
+	// when the first e-mail was withheld.
 	_, err = s.Jobs.InsertTx(ctx, tx, NotifyStatusArgs{RequestID: id, Status: status},
-		&river.InsertOpts{UniqueOpts: river.UniqueOpts{ByArgs: true}})
+		&river.InsertOpts{UniqueOpts: river.UniqueOpts{ByArgs: true, ByState: []rivertype.JobState{
+			rivertype.JobStateAvailable, rivertype.JobStatePending, rivertype.JobStateRetryable,
+			rivertype.JobStateRunning, rivertype.JobStateScheduled,
+		}}})
 	return err
 }
 

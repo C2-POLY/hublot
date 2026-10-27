@@ -178,3 +178,38 @@ func TestMovedSinceLastVisit(t *testing.T) {
 	}
 	eq(t, "hidden requests never show", titles(home()), []string{"Notification manquante:planned"})
 }
+
+func TestNewRequestHasNotMoved(t *testing.T) {
+	e := setup(t)
+	e.grant("marie@acme.test", "shop", "reporter")
+	marie := e.login("marie@acme.test")
+	home := func() []string {
+		t.Helper()
+		st, body := marie.do("GET", "/api/home", nil)
+		if st != http.StatusOK {
+			t.Fatalf("home: %d %s", st, body)
+		}
+		var v struct {
+			Moved []struct{ Title, Status string }
+		}
+		json.Unmarshal(body, &v)
+		out := []string{}
+		for _, m := range v.Moved {
+			out = append(out, m.Title+":"+m.Status)
+		}
+		return out
+	}
+
+	home()
+	if _, err := e.pool.Exec(context.Background(), "UPDATE app_user SET last_seen_at = last_seen_at - interval '1 hour'"); err != nil {
+		t.Fatal(err)
+	}
+	eq(t, "a new visit", home(), []string{})
+	id := marie.problem("shop", "PDF coupé")
+	eq(t, "filing it is not a move", home(), []string{})
+	e.milestone(1)
+	marie.eventually(id, "planned")
+	eq(t, "its first change is", home(), []string{"PDF coupé:planned"})
+	eq(t, "status filters have their indexes", e.count(
+		"SELECT count(*) FROM pg_indexes WHERE indexname IN ('request_author_status', 'request_project_status')"), 2)
+}

@@ -29,6 +29,7 @@ forge:
 
 sync:
   resync_interval: 1h
+  full_resync_interval: 24h
 
 projects:
   - slug: boutique

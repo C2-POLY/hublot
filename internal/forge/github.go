@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +23,8 @@ import (
 // GitHub talks to GitHub as a GitHub App installation (never with a personal token).
 type GitHub struct {
 	client *github.Client
+	// appID identifies the portal's own issues (performed_via_github_app).
+	appID int64
 	// graphqlURL serves the calls REST does not offer (Projects fields, transfers).
 	graphqlURL string
 
@@ -44,11 +48,11 @@ func NewGitHub(appID, installationID int64, privateKeyPath, apiURL string) (*Git
 	if apiURL != "" {
 		tr.BaseURL = strings.TrimRight(apiURL, "/")
 	}
-	return newGitHub(&http.Client{Transport: tr, Timeout: 20 * time.Second}, apiURL)
+	return newGitHub(&http.Client{Transport: tr, Timeout: 20 * time.Second}, apiURL, appID)
 }
 
 // newGitHub builds the adapter on an authenticated client; tests give it a local server.
-func newGitHub(hc *http.Client, apiURL string) (*GitHub, error) {
+func newGitHub(hc *http.Client, apiURL string, appID int64) (*GitHub, error) {
 	opts := []github.ClientOptionsFunc{github.WithHTTPClient(hc), github.WithUserAgent("hublot")}
 	graphqlURL := "https://api.github.com/graphql"
 	if apiURL != "" {
@@ -61,7 +65,7 @@ func newGitHub(hc *http.Client, apiURL string) (*GitHub, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &GitHub{client: client, graphqlURL: graphqlURL, forms: map[string]cachedForms{}}, nil
+	return &GitHub{client: client, appID: appID, graphqlURL: graphqlURL, forms: map[string]cachedForms{}}, nil
 }
 
 func (g *GitHub) IssueForms(ctx context.Context, repo Repo) (map[string]IssueForm, error) {
@@ -117,11 +121,32 @@ func (g *GitHub) CreateIssue(ctx context.Context, repo Repo, in NewIssue) (Issue
 	if err != nil {
 		return Issue{}, fmt.Errorf("github: create issue in %s: %w", repo, err)
 	}
-	return fromGitHub(created), nil
+	return fromGitHub(created, nil), nil
+}
+
+// ghIssue is an issue as GitHub sends it, with the App it was opened through, which
+// go-github's Issue does not read.
+type ghIssue struct {
+	github.Issue
+	PerformedViaGitHubApp *github.App `json:"performed_via_github_app"`
+}
+
+func (i *ghIssue) issue() Issue { return fromGitHub(&i.Issue, i.PerformedViaGitHubApp) }
+
+// OwnIssue: opened by the App's bot account through the configured App. Only the App
+// can open an issue so; a marker copied by anyone else, even with the portal label an
+// issue form applied, does not pass.
+func (g *GitHub) OwnIssue(i Issue) bool {
+	return g.appID != 0 && i.ViaApp == g.appID && i.AuthorBot
 }
 
 func (g *GitHub) GetIssue(ctx context.Context, repo Repo, number int) (Issue, error) {
-	i, _, err := g.client.Issues.Get(ctx, repo.Owner, repo.Name, number)
+	req, err := g.client.NewRequest(ctx, http.MethodGet, fmt.Sprintf("repos/%s/%s/issues/%d", repo.Owner, repo.Name, number), nil)
+	if err != nil {
+		return Issue{}, err
+	}
+	var i ghIssue
+	_, err = g.client.Do(req, &i)
 	if isNotFound(err) || isGone(err) {
 		return Issue{}, ErrNotFound
 	}
@@ -131,29 +156,34 @@ func (g *GitHub) GetIssue(ctx context.Context, repo Repo, number int) (Issue, er
 	if i.IsPullRequest() {
 		return Issue{}, ErrNotFound
 	}
-	return fromGitHub(i), nil
+	return i.issue(), nil
 }
 
 func (g *GitHub) ListPortalIssues(ctx context.Context, repo Repo, since time.Time) ([]Issue, error) {
-	opts := &github.IssueListByRepoOptions{
-		State: "all", Labels: []string{LabelPortal}, Since: since, Sort: "updated", Direction: "asc",
-		ListOptions: github.ListOptions{PerPage: 100},
+	q := url.Values{"state": {"all"}, "labels": {LabelPortal}, "sort": {"updated"}, "direction": {"asc"}, "per_page": {"100"}}
+	if !since.IsZero() {
+		q.Set("since", since.UTC().Format(time.RFC3339))
 	}
 	out := []Issue{}
 	for {
-		page, resp, err := g.client.Issues.ListByRepo(ctx, repo.Owner, repo.Name, opts)
+		req, err := g.client.NewRequest(ctx, http.MethodGet, fmt.Sprintf("repos/%s/%s/issues?%s", repo.Owner, repo.Name, q.Encode()), nil)
+		if err != nil {
+			return nil, err
+		}
+		var page []*ghIssue
+		resp, err := g.client.Do(req, &page)
 		if err != nil {
 			return nil, fmt.Errorf("github: list portal issues of %s: %w", repo, err)
 		}
 		for _, i := range page {
 			if !i.IsPullRequest() {
-				out = append(out, fromGitHub(i))
+				out = append(out, i.issue())
 			}
 		}
 		if resp.NextPage == 0 {
 			return out, nil
 		}
-		opts.ListOptions.Page = resp.NextPage
+		q.Set("page", strconv.Itoa(resp.NextPage))
 	}
 }
 
@@ -186,6 +216,9 @@ func (g *GitHub) ProjectStatus(ctx context.Context, repo Repo, number, project i
 	err := g.graphql(ctx, projectStatusQuery, map[string]any{
 		"owner": repo.Owner, "name": repo.Name, "number": number, "field": field,
 	}, &out)
+	if errors.Is(err, ErrNotFound) {
+		return "", ErrNotFound
+	}
 	if err != nil {
 		return "", fmt.Errorf("github: project status of %s#%d: %w", repo, number, err)
 	}
@@ -253,7 +286,7 @@ func (g *GitHub) UpdateIssue(ctx context.Context, repo Repo, number int, in Issu
 	if err != nil {
 		return Issue{}, fmt.Errorf("github: update %s#%d: %w", repo, number, err)
 	}
-	return fromGitHub(edited), nil
+	return fromGitHub(edited, nil), nil
 }
 
 func (g *GitHub) IssueTypes(ctx context.Context, org string) ([]string, error) {
@@ -268,7 +301,9 @@ func (g *GitHub) IssueTypes(ctx context.Context, org string) ([]string, error) {
 	return out, nil
 }
 
-// graphql runs one GraphQL call with the installation's credentials.
+// graphql runs one GraphQL call with the installation's credentials. An error that only
+// says something does not exist (a deleted or transferred issue) wraps ErrNotFound, so
+// callers stop retrying.
 func (g *GitHub) graphql(ctx context.Context, query string, vars map[string]any, out any) error {
 	req, err := g.client.NewRequest(ctx, http.MethodPost, g.graphqlURL, map[string]any{"query": query, "variables": vars})
 	if err != nil {
@@ -276,23 +311,32 @@ func (g *GitHub) graphql(ctx context.Context, query string, vars map[string]any,
 	}
 	var resp struct {
 		Data   json.RawMessage
-		Errors []struct{ Message string }
+		Errors []struct{ Type, Message string }
 	}
 	if _, err := g.client.Do(req, &resp); err != nil {
 		return err
 	}
 	if len(resp.Errors) > 0 {
 		msgs := make([]string, 0, len(resp.Errors))
+		notFound := true
 		for _, e := range resp.Errors {
 			msgs = append(msgs, e.Message)
+			notFound = notFound && (e.Type == "NOT_FOUND" || strings.HasPrefix(e.Message, "Could not resolve"))
+		}
+		if notFound {
+			return fmt.Errorf("graphql: %s: %w", strings.Join(msgs, "; "), ErrNotFound)
 		}
 		return fmt.Errorf("graphql: %s", strings.Join(msgs, "; "))
 	}
 	return json.Unmarshal(resp.Data, out)
 }
 
-func fromGitHub(i *github.Issue) Issue {
+// fromGitHub converts an issue; app is the App it was opened through, nil when unknown.
+func fromGitHub(i *github.Issue, app *github.App) Issue {
 	out := Issue{
+		Author:      i.GetUser().GetLogin(),
+		AuthorBot:   i.GetUser().GetType() == "Bot",
+		ViaApp:      app.GetID(),
 		Number:      i.GetNumber(),
 		NodeID:      i.GetNodeID(),
 		Title:       i.GetTitle(),

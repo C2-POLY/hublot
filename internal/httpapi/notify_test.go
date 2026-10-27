@@ -183,3 +183,42 @@ func TestPreferences(t *testing.T) {
 	_, v = prefs(marie)
 	eq(t, "still off", v["notifyStatus"], false)
 }
+
+func TestStatusEmailWhenStatusComesBack(t *testing.T) {
+	e := setup(t)
+	e.grant("marie@acme.test", "shop", "reporter")
+	marie := e.login("marie@acme.test")
+	prefs := func(on bool) {
+		t.Helper()
+		if st, _ := marie.do("PATCH", "/api/me/preferences", map[string]any{"notifyStatus": on}); st != http.StatusOK {
+			t.Fatalf("preferences: %d", st)
+		}
+	}
+	at := time.Now()
+	milestone := func(title string) {
+		t.Helper()
+		at = at.Add(time.Second)
+		i := e.fakeIssue(shop, 1)
+		i.Milestone = title
+		e.send("issues", issuePayload("milestoned", "acme/shop", i, at))
+	}
+
+	prefs(false)
+	id := marie.problem("shop", "Le PDF est illisible")
+	milestone("v2.1")
+	marie.eventually(id, "planned")
+	e.notified(id, 1)
+	prefs(true)
+	milestone("")
+	marie.eventually(id, "received")
+	milestone("v2.2")
+	marie.eventually(id, "planned")
+	e.notified(id, 3)
+	planned := 0
+	for _, m := range e.statusMails("marie@acme.test") {
+		if strings.Contains(m.Subject, "planifiée") {
+			planned++
+		}
+	}
+	eq(t, "planned again, mailed this time", planned, 1)
+}

@@ -473,7 +473,7 @@ func (q *Queries) GetIssueCache(ctx context.Context, arg GetIssueCacheParams) (I
 }
 
 const getProjectBySlug = `-- name: GetProjectBySlug :one
-SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at FROM project WHERE slug = $1 AND NOT archived
+SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at, full_synced_at FROM project WHERE slug = $1 AND NOT archived
 `
 
 func (q *Queries) GetProjectBySlug(ctx context.Context, slug string) (Project, error) {
@@ -493,6 +493,7 @@ func (q *Queries) GetProjectBySlug(ctx context.Context, slug string) (Project, e
 		&i.Position,
 		&i.Archived,
 		&i.SyncedAt,
+		&i.FullSyncedAt,
 	)
 	return i, err
 }
@@ -682,7 +683,7 @@ func (q *Queries) LinkAttachment(ctx context.Context, arg LinkAttachmentParams) 
 }
 
 const listAllProjects = `-- name: ListAllProjects :many
-SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at FROM project ORDER BY position, name
+SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at, full_synced_at FROM project ORDER BY position, name
 `
 
 func (q *Queries) ListAllProjects(ctx context.Context) ([]Project, error) {
@@ -708,6 +709,7 @@ func (q *Queries) ListAllProjects(ctx context.Context) ([]Project, error) {
 			&i.Position,
 			&i.Archived,
 			&i.SyncedAt,
+			&i.FullSyncedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -720,7 +722,7 @@ func (q *Queries) ListAllProjects(ctx context.Context) ([]Project, error) {
 }
 
 const listProjects = `-- name: ListProjects :many
-SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at FROM project WHERE NOT archived ORDER BY position, name
+SELECT id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at, full_synced_at FROM project WHERE NOT archived ORDER BY position, name
 `
 
 func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
@@ -746,6 +748,7 @@ func (q *Queries) ListProjects(ctx context.Context) ([]Project, error) {
 			&i.Position,
 			&i.Archived,
 			&i.SyncedAt,
+			&i.FullSyncedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -984,7 +987,8 @@ SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owne
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
-JOIN LATERAL (SELECT max(s.at) AS at FROM request_status s WHERE s.request_id = r.id) m ON true
+JOIN LATERAL (SELECT max(s.at) AS at FROM request_status s WHERE s.request_id = r.id
+              AND s.id > (SELECT min(f.id) FROM request_status f WHERE f.request_id = r.id)) m ON true
 WHERE r.author_id = $1 AND m.at > $2::timestamptz
 ORDER BY m.at DESC
 LIMIT 50
@@ -1017,6 +1021,7 @@ type ListRequestsMovedSinceRow struct {
 }
 
 // The author's requests whose status changed after @since, the latest change first.
+// The first history row records the filing, not a change: a request just filed has not moved.
 func (q *Queries) ListRequestsMovedSince(ctx context.Context, arg ListRequestsMovedSinceParams) ([]ListRequestsMovedSinceRow, error) {
 	rows, err := q.db.Query(ctx, listRequestsMovedSince, arg.AuthorID, arg.Since)
 	if err != nil {
@@ -1297,16 +1302,19 @@ func (q *Queries) SetIssueProjectStatus(ctx context.Context, arg SetIssueProject
 }
 
 const setProjectSynced = `-- name: SetProjectSynced :exec
-UPDATE project SET synced_at = $2 WHERE id = $1
+UPDATE project SET synced_at = $1,
+    full_synced_at = CASE WHEN $2::boolean THEN $1 ELSE full_synced_at END
+WHERE id = $3
 `
 
 type SetProjectSyncedParams struct {
-	ID       uuid.UUID
 	SyncedAt *time.Time
+	FullRun  bool
+	ID       uuid.UUID
 }
 
 func (q *Queries) SetProjectSynced(ctx context.Context, arg SetProjectSyncedParams) error {
-	_, err := q.db.Exec(ctx, setProjectSynced, arg.ID, arg.SyncedAt)
+	_, err := q.db.Exec(ctx, setProjectSynced, arg.SyncedAt, arg.FullRun, arg.ID)
 	return err
 }
 
@@ -1470,7 +1478,7 @@ ON CONFLICT (slug) DO UPDATE SET
     repo_owner = EXCLUDED.repo_owner, repo_name = EXCLUDED.repo_name,
     reporters_see_all = EXCLUDED.reporters_see_all, inbox = EXCLUDED.inbox,
     position = EXCLUDED.position, archived = false
-RETURNING id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at
+RETURNING id, slug, name, hint, color, vehicle, repo_owner, repo_name, reporters_see_all, inbox, position, archived, synced_at, full_synced_at
 `
 
 type UpsertProjectParams struct {
@@ -1514,6 +1522,7 @@ func (q *Queries) UpsertProject(ctx context.Context, arg UpsertProjectParams) (P
 		&i.Position,
 		&i.Archived,
 		&i.SyncedAt,
+		&i.FullSyncedAt,
 	)
 	return i, err
 }
