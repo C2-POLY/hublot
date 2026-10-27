@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addGroupMember = `-- name: AddGroupMember :exec
@@ -223,7 +224,7 @@ const createUser = `-- name: CreateUser :one
 INSERT INTO app_user (email, name, org_role, lang)
 VALUES ($1, $2, $3, $4)
 ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name, org_role = EXCLUDED.org_role
-RETURNING id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status
+RETURNING id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status, last_seen_at, previous_visit_at
 `
 
 type CreateUserParams struct {
@@ -251,6 +252,8 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (AppUser
 		&i.CreatedAt,
 		&i.LastLoginAt,
 		&i.NotifyStatus,
+		&i.LastSeenAt,
+		&i.PreviousVisitAt,
 	)
 	return i, err
 }
@@ -548,7 +551,7 @@ func (q *Queries) GetRequest(ctx context.Context, id uuid.UUID) (GetRequestRow, 
 }
 
 const getSessionUser = `-- name: GetSessionUser :one
-SELECT u.id, u.email, u.name, u.org_role, u.lang, u.suspended, u.created_at, u.last_login_at, u.notify_status FROM user_session s JOIN app_user u ON u.id = s.user_id
+SELECT u.id, u.email, u.name, u.org_role, u.lang, u.suspended, u.created_at, u.last_login_at, u.notify_status, u.last_seen_at, u.previous_visit_at FROM user_session s JOIN app_user u ON u.id = s.user_id
 WHERE s.token_hash = $1 AND s.expires_at > now() AND NOT u.suspended
 `
 
@@ -565,13 +568,15 @@ func (q *Queries) GetSessionUser(ctx context.Context, tokenHash []byte) (AppUser
 		&i.CreatedAt,
 		&i.LastLoginAt,
 		&i.NotifyStatus,
+		&i.LastSeenAt,
+		&i.PreviousVisitAt,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
 
-SELECT id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status FROM app_user WHERE id = $1
+SELECT id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status, last_seen_at, previous_visit_at FROM app_user WHERE id = $1
 `
 
 // SPDX-License-Identifier: AGPL-3.0-or-later
@@ -588,12 +593,14 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (AppUser, error) {
 		&i.CreatedAt,
 		&i.LastLoginAt,
 		&i.NotifyStatus,
+		&i.LastSeenAt,
+		&i.PreviousVisitAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status FROM app_user WHERE email = $1
+SELECT id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status, last_seen_at, previous_visit_at FROM app_user WHERE email = $1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AppUser, error) {
@@ -609,6 +616,8 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AppUser, er
 		&i.CreatedAt,
 		&i.LastLoginAt,
 		&i.NotifyStatus,
+		&i.LastSeenAt,
+		&i.PreviousVisitAt,
 	)
 	return i, err
 }
@@ -816,9 +825,19 @@ FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
 WHERE r.author_id = $1
+  AND ($2::uuid IS NULL OR r.project_id = $2)
+  AND ($3::text IS NULL OR r.kind = $3)
+  AND ($4::text IS NULL OR r.status = $4)
 ORDER BY r.created_at DESC
 LIMIT 200
 `
+
+type ListRequestsByAuthorParams struct {
+	AuthorID  uuid.UUID
+	ProjectID uuid.NullUUID
+	Kind      pgtype.Text
+	Status    pgtype.Text
+}
 
 type ListRequestsByAuthorRow struct {
 	ID              uuid.UUID
@@ -840,8 +859,13 @@ type ListRequestsByAuthorRow struct {
 	AuthorName      string
 }
 
-func (q *Queries) ListRequestsByAuthor(ctx context.Context, authorID uuid.UUID) ([]ListRequestsByAuthorRow, error) {
-	rows, err := q.db.Query(ctx, listRequestsByAuthor, authorID)
+func (q *Queries) ListRequestsByAuthor(ctx context.Context, arg ListRequestsByAuthorParams) ([]ListRequestsByAuthorRow, error) {
+	rows, err := q.db.Query(ctx, listRequestsByAuthor,
+		arg.AuthorID,
+		arg.ProjectID,
+		arg.Kind,
+		arg.Status,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -884,9 +908,17 @@ FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
 WHERE r.project_id = $1
+  AND ($2::text IS NULL OR r.kind = $2)
+  AND ($3::text IS NULL OR r.status = $3)
 ORDER BY r.created_at DESC
 LIMIT 200
 `
+
+type ListRequestsByProjectParams struct {
+	ProjectID uuid.UUID
+	Kind      pgtype.Text
+	Status    pgtype.Text
+}
 
 type ListRequestsByProjectRow struct {
 	ID              uuid.UUID
@@ -908,8 +940,8 @@ type ListRequestsByProjectRow struct {
 	AuthorName      string
 }
 
-func (q *Queries) ListRequestsByProject(ctx context.Context, projectID uuid.UUID) ([]ListRequestsByProjectRow, error) {
-	rows, err := q.db.Query(ctx, listRequestsByProject, projectID)
+func (q *Queries) ListRequestsByProject(ctx context.Context, arg ListRequestsByProjectParams) ([]ListRequestsByProjectRow, error) {
+	rows, err := q.db.Query(ctx, listRequestsByProject, arg.ProjectID, arg.Kind, arg.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -935,6 +967,84 @@ func (q *Queries) ListRequestsByProject(ctx context.Context, projectID uuid.UUID
 			&i.Labels,
 			&i.Milestone,
 			&i.AuthorName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRequestsMovedSince = `-- name: ListRequestsMovedSince :many
+SELECT r.id, r.project_id, r.origin_project_id, r.author_id, r.kind, r.repo_owner, r.repo_name, r.issue_number, r.issue_node_id, r.created_at, r.status, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name,
+       m.at::timestamptz AS moved_at
+FROM request r
+JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
+JOIN app_user u ON u.id = r.author_id
+JOIN LATERAL (SELECT max(s.at) AS at FROM request_status s WHERE s.request_id = r.id) m ON true
+WHERE r.author_id = $1 AND m.at > $2::timestamptz
+ORDER BY m.at DESC
+LIMIT 50
+`
+
+type ListRequestsMovedSinceParams struct {
+	AuthorID uuid.UUID
+	Since    time.Time
+}
+
+type ListRequestsMovedSinceRow struct {
+	ID              uuid.UUID
+	ProjectID       uuid.UUID
+	OriginProjectID uuid.UUID
+	AuthorID        uuid.UUID
+	Kind            string
+	RepoOwner       string
+	RepoName        string
+	IssueNumber     int32
+	IssueNodeID     string
+	CreatedAt       time.Time
+	Status          string
+	Title           string
+	State           string
+	StateReason     string
+	Labels          []string
+	Milestone       string
+	AuthorName      string
+	MovedAt         time.Time
+}
+
+// The author's requests whose status changed after @since, the latest change first.
+func (q *Queries) ListRequestsMovedSince(ctx context.Context, arg ListRequestsMovedSinceParams) ([]ListRequestsMovedSinceRow, error) {
+	rows, err := q.db.Query(ctx, listRequestsMovedSince, arg.AuthorID, arg.Since)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListRequestsMovedSinceRow{}
+	for rows.Next() {
+		var i ListRequestsMovedSinceRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ProjectID,
+			&i.OriginProjectID,
+			&i.AuthorID,
+			&i.Kind,
+			&i.RepoOwner,
+			&i.RepoName,
+			&i.IssueNumber,
+			&i.IssueNodeID,
+			&i.CreatedAt,
+			&i.Status,
+			&i.Title,
+			&i.State,
+			&i.StateReason,
+			&i.Labels,
+			&i.Milestone,
+			&i.AuthorName,
+			&i.MovedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -1244,6 +1354,30 @@ func (q *Queries) SetUserNotifyStatus(ctx context.Context, arg SetUserNotifyStat
 	return notify_status, err
 }
 
+const startVisit = `-- name: StartVisit :one
+UPDATE app_user SET
+    previous_visit_at = CASE WHEN last_seen_at IS NULL OR last_seen_at < $1::timestamptz
+                             THEN last_seen_at ELSE previous_visit_at END,
+    last_seen_at = now()
+WHERE id = $2
+RETURNING previous_visit_at
+`
+
+type StartVisitParams struct {
+	VisitStart time.Time
+	ID         uuid.UUID
+}
+
+// Records that the person opened the home and returns where this visit looks back to.
+// A new visit starts when the last one is older than @visit_start: previous_visit_at
+// then takes the old last_seen_at. Within a visit, reloads keep the same answer.
+func (q *Queries) StartVisit(ctx context.Context, arg StartVisitParams) (*time.Time, error) {
+	row := q.db.QueryRow(ctx, startVisit, arg.VisitStart, arg.ID)
+	var previous_visit_at *time.Time
+	err := row.Scan(&previous_visit_at)
+	return previous_visit_at, err
+}
+
 const touchSession = `-- name: TouchSession :exec
 UPDATE user_session SET last_seen_at = now() WHERE token_hash = $1
 `
@@ -1416,7 +1550,7 @@ VALUES ($1, $2, $3, $4, now())
 ON CONFLICT (email) DO UPDATE
 SET last_login_at = now(),
     org_role = CASE WHEN EXCLUDED.org_role = 'owner' THEN 'owner'::org_role ELSE app_user.org_role END
-RETURNING id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status
+RETURNING id, email, name, org_role, lang, suspended, created_at, last_login_at, notify_status, last_seen_at, previous_visit_at
 `
 
 type UpsertUserOnLoginParams struct {
@@ -1444,6 +1578,8 @@ func (q *Queries) UpsertUserOnLogin(ctx context.Context, arg UpsertUserOnLoginPa
 		&i.CreatedAt,
 		&i.LastLoginAt,
 		&i.NotifyStatus,
+		&i.LastSeenAt,
+		&i.PreviousVisitAt,
 	)
 	return i, err
 }

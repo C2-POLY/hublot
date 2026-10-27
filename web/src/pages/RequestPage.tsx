@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next'
 import { ApiError, type PortalRequest } from '../api/client'
 import { useRequest } from '../api/hooks'
 import { VehicleEmblem } from '../components/Emblem'
-import { BoxIcon, CheckIcon, ClockIcon } from '../components/Icons'
+import { BoxIcon, CheckIcon, ClockIcon, CloseIcon } from '../components/Icons'
 import { AttachmentTile } from '../components/AttachmentTile'
 import { ErrorState, Loading } from '../components/States'
 import { PrivateBadge } from '../components/StatusPill'
 import { formatDay } from '../lib/format'
-import { TIMELINE, timelineIndex } from '../lib/status'
+import { parcelSteps, statusSentenceKey, type Step } from '../lib/status'
 
 export function RequestPage() {
   const { t } = useTranslation()
@@ -36,10 +36,7 @@ export function RequestPage() {
 
 function RequestView({ r }: { r: PortalRequest }) {
   const { t, i18n } = useTranslation()
-  const current = timelineIndex(r.status)
-  // Answered or closed requests sit outside the parcel steps: everything before stays done.
-  const reached = current >= 0 ? current : 0
-  const offTimeline = current < 0
+  const steps = parcelSteps(r)
 
   return (
     <div className="flex flex-col gap-7">
@@ -64,44 +61,17 @@ function RequestView({ r }: { r: PortalRequest }) {
           </span>
         </div>
 
-        <ol aria-label={t('track.timeline')} className="m-0 mt-7 grid list-none grid-cols-1 gap-2.5 p-0 sm:grid-cols-5">
-          {TIMELINE.map((step, i) => {
-            const done = i < reached || (offTimeline && i === 0) || (step === 'available' && current === i)
-            const isCurrent = !offTimeline && i === current && step !== 'available'
-            const label = t(`status.${step}`)
-            if (done) {
-              return (
-                <li key={step} className="flex flex-row items-center gap-2 rounded-[14px] border-franc bg-ink p-3.5 text-white sm:flex-col sm:items-start sm:gap-1.5">
-                  <CheckIcon color="#7FD8B6" />
-                  <span className="text-[17px] font-bold">{label}</span>
-                  {i === 0 && (
-                    <span className="text-sm text-[#D6D6D6]">{t('track.receivedOn', { date: formatDay(r.createdAt, i18n.language) })}</span>
-                  )}
-                </li>
-              )
-            }
-            if (isCurrent) {
-              return (
-                <li
-                  key={step}
-                  aria-current="step"
-                  className="flex flex-row items-center gap-2 rounded-[14px] border-franc-strong bg-accent p-3.5 shadow-hard sm:-translate-y-1 sm:flex-col sm:items-start sm:gap-1.5"
-                >
-                  <ClockIcon />
-                  <span className="text-[17px] font-bold">{label}</span>
-                  {i === 0 && <span className="text-sm">{t('track.receivedOn', { date: formatDay(r.createdAt, i18n.language) })}</span>}
-                </li>
-              )
-            }
-            return (
-              <li key={step} className="flex flex-row items-center gap-2 rounded-[14px] border-franc-dashed bg-surface p-3.5 sm:flex-col sm:items-start sm:gap-1.5">
-                <BoxIcon />
-                <span className="text-[17px] font-bold">{label}</span>
-              </li>
-            )
-          })}
+        <ol
+          aria-label={t('track.timeline')}
+          className="m-0 mt-6 flex list-none flex-col p-0 sm:mt-7 sm:grid sm:auto-cols-fr sm:grid-flow-col sm:gap-2.5"
+        >
+          {steps.map((step) => (
+            <TimelineStep key={step.status} step={step} milestone={r.milestone} />
+          ))}
         </ol>
-        <p className="m-0 mt-[22px] text-[19px] font-bold leading-snug">{t(`statusLine.${r.status}`)}</p>
+        <p className="m-0 mt-[22px] text-[19px] font-bold leading-snug">
+          {t(statusSentenceKey(r), { milestone: r.milestone })}
+        </p>
       </section>
 
       <div className="flex flex-wrap items-start gap-7">
@@ -133,5 +103,57 @@ function RequestView({ r }: { r: PortalRequest }) {
         </aside>
       </div>
     </div>
+  )
+}
+
+// One step of the parcel timeline: a compact row on phones (C-SuiviMobile), a tile from sm up (C-Suivi).
+function TimelineStep({ step, milestone }: { step: Step; milestone?: string }) {
+  const { t, i18n } = useTranslation()
+  const ending = step.status === 'answered' || step.status === 'closed'
+  const date = step.at ? formatDay(step.at, i18n.language) : ''
+  const label = t(`status.${step.status}`)
+  const row = 'grid grid-cols-[30px_minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:flex-col sm:items-start sm:gap-1.5 sm:rounded-[14px] sm:p-3.5'
+  const mark = 'flex h-[26px] w-[26px] items-center justify-center rounded-lg sm:h-auto sm:w-auto sm:rounded-none sm:border-0 sm:bg-transparent'
+
+  if (step.state === 'current' || ending) {
+    const bg = step.status === 'answered' ? 'bg-mint' : step.status === 'closed' ? 'bg-surface' : 'bg-accent'
+    return (
+      <li
+        aria-current="step"
+        className={`${row} my-1 -mx-2.5 min-h-[52px] rounded-[14px] border-franc-strong px-2.5 shadow-hard sm:m-0 sm:-translate-y-1 ${bg}`}
+      >
+        <span aria-hidden="true" className={`${mark} border-franc bg-surface`}>
+          {ending ? (step.status === 'closed' ? <CloseIcon /> : <CheckIcon />) : <ClockIcon />}
+        </span>
+        <span className="text-[18px] font-bold sm:text-[17px]">{label}</span>
+        <span className="text-sm font-bold sm:font-normal">
+          {date && (ending ? t('track.on', { date }) : t('track.since', { date }))}
+        </span>
+      </li>
+    )
+  }
+  if (step.state === 'done') {
+    return (
+      <li className={`${row} min-h-10 sm:border-franc sm:bg-ink sm:text-white`}>
+        <span aria-hidden="true" className={`${mark} border-franc bg-ink`}>
+          <CheckIcon color="#7FD8B6" size={16} />
+        </span>
+        <span className="font-bold sm:text-[17px]">{label}</span>
+        <span className="text-sm sm:text-[#D6D6D6]">{date}</span>
+      </li>
+    )
+  }
+  return (
+    <li className={`${row} min-h-10 sm:border-franc-dashed sm:bg-surface`}>
+      <span aria-hidden="true" className={`${mark} border-franc-dashed`}>
+        <span className="hidden sm:inline">
+          <BoxIcon />
+        </span>
+      </span>
+      <span className="font-bold text-ink-2 sm:text-[17px] sm:text-ink">{label}</span>
+      <span className="text-sm text-ink-2 sm:text-ink">
+        {step.status === 'available' && milestone ? t('track.inVersion', { milestone }) : ''}
+      </span>
+    </li>
   )
 }

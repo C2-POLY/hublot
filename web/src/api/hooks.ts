@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useQuery } from '@tanstack/react-query'
-import { api, ApiError } from './client'
+import { api, ApiError, type RequestFilter } from './client'
 
 const noRetryOnClientError = (count: number, err: unknown) =>
   !(err instanceof ApiError && err.status >= 400 && err.status < 500) && count < 2
@@ -15,6 +15,19 @@ export function usePreferences() {
 
 export function useMyRequests() {
   return useQuery({ queryKey: ['requests', 'mine'], queryFn: api.myRequests, retry: noRetryOnClientError })
+}
+
+export function useRequests(filter: RequestFilter, enabled = true) {
+  return useQuery({
+    queryKey: ['requests', filter],
+    queryFn: () => api.requests(filter),
+    enabled,
+    retry: noRetryOnClientError,
+  })
+}
+
+export function useHome() {
+  return useQuery({ queryKey: ['home'], queryFn: api.home, retry: noRetryOnClientError })
 }
 
 export function useRequest(id: string) {

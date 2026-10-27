@@ -135,6 +135,12 @@ the reader's Hublot session.
 - `GET /api/requests?scope=all&project=online-shop` → every request of that project the user may see.
 - `GET /api/requests/{id}` → `200 Request` or `404`.
 
+Both lists take optional filters, combined with AND: `kind` (`problem`, `idea`, `question`), `status`
+(one of the statuses below) and, for `scope=mine`, `project` (a slug). A wrong value answers
+`422 validation` with `fields: {"kind": "invalid"}`. For `scope=mine`, a project the user may not see
+answers exactly like one that does not exist (`422`); for `scope=all` both answer `404`. Filters only
+narrow what the user may already see.
+
 ```json
 {
   "id": "a3c2…",
@@ -147,6 +153,7 @@ the reader's Hublot session.
   "createdAt": "2026-10-27T09:12:00Z",
   "author": {"name": "Marie"},
   "attachments": [Attachment],
+  "milestone": "Novembre",
   "history": [
     {"status": "received", "at": "2026-10-27T09:12:00Z"},
     {"status": "planned", "at": "2026-10-28T14:03:00Z"}
@@ -165,8 +172,18 @@ computed from the GitHub issue each time it changes, first match wins:
 4. open → `received`.
 
 `history` (detail only) lists the status changes, oldest first, starting with `received` at filing.
+`milestone` (detail only, absent when none) is the version the request is planned for, the GitHub
+milestone title.
 `number` is the GitHub issue number, shown small, only to talk to a developer. After a transfer in
 GitHub, the request follows its issue: `project` and `number` are the new ones.
+
+### Home: what moved since the last visit
+
+`GET /api/home` → `200 {"moved": [Request]}`: the user's own requests whose status changed since their
+previous visit, that they may still see, the latest change first, at most 5. Each carries `movedAt`, when
+its status last changed. Calling it records the visit: a visit starts when the user opens the home after
+30 minutes away and looks back to the last time they opened it before; reloads within a visit answer the
+same list. The very first visit answers an empty list.
 
 ## Triage
 

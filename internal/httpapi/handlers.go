@@ -150,15 +150,17 @@ func (s *Server) listRequests(w http.ResponseWriter, r *http.Request) {
 		list []portal.RequestView
 		err  error
 	)
-	switch q := r.URL.Query(); q.Get("scope") {
+	q := r.URL.Query()
+	f := portal.ListFilter{Project: q.Get("project"), Kind: q.Get("kind"), Status: q.Get("status")}
+	switch q.Get("scope") {
 	case "", "mine":
-		list, err = s.Portal.ListMine(r.Context(), subjectFrom(r))
+		list, err = s.Portal.ListMine(r.Context(), subjectFrom(r), f)
 	case "all":
-		if q.Get("project") == "" {
+		if f.Project == "" {
 			writeError(w, http.StatusBadRequest, "bad_request", map[string]string{"project": "required"})
 			return
 		}
-		list, err = s.Portal.ListProject(r.Context(), subjectFrom(r), q.Get("project"))
+		list, err = s.Portal.ListProject(r.Context(), subjectFrom(r), f.Project, f)
 	default:
 		writeError(w, http.StatusBadRequest, "bad_request", map[string]string{"scope": "invalid"})
 		return
@@ -168,6 +170,16 @@ func (s *Server) listRequests(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"requests": list})
+}
+
+// home records the visit and answers what moved since the previous one.
+func (s *Server) home(w http.ResponseWriter, r *http.Request) {
+	moved, err := s.Portal.MovedSinceLastVisit(r.Context(), subjectFrom(r))
+	if err != nil {
+		s.fail(w, r, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"moved": moved})
 }
 
 func (s *Server) getRequest(w http.ResponseWriter, r *http.Request) {

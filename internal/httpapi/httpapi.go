@@ -71,6 +71,7 @@ func (s *Server) Handler() http.Handler {
 			r.Get("/me", s.me)
 			r.Get("/me/preferences", s.preferences)
 			r.Patch("/me/preferences", s.setPreferences)
+			r.Get("/home", s.home)
 			r.Get("/projects/{slug}/forms", s.forms)
 			r.Post("/attachments", s.uploadAttachment)
 			r.Get("/attachments/{id}", s.getAttachment)

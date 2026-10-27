@@ -185,7 +185,10 @@ SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS a
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
-WHERE r.author_id = $1
+WHERE r.author_id = @author_id
+  AND (sqlc.narg(project_id)::uuid IS NULL OR r.project_id = sqlc.narg(project_id))
+  AND (sqlc.narg(kind)::text IS NULL OR r.kind = sqlc.narg(kind))
+  AND (sqlc.narg(status)::text IS NULL OR r.status = sqlc.narg(status))
 ORDER BY r.created_at DESC
 LIMIT 200;
 
@@ -194,7 +197,9 @@ SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS a
 FROM request r
 JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
 JOIN app_user u ON u.id = r.author_id
-WHERE r.project_id = $1
+WHERE r.project_id = @project_id
+  AND (sqlc.narg(kind)::text IS NULL OR r.kind = sqlc.narg(kind))
+  AND (sqlc.narg(status)::text IS NULL OR r.status = sqlc.narg(status))
 ORDER BY r.created_at DESC
 LIMIT 200;
 
@@ -245,3 +250,26 @@ LIMIT 200;
 
 -- name: SetRequestKind :exec
 UPDATE request SET kind = $2 WHERE id = $1;
+
+-- name: StartVisit :one
+-- Records that the person opened the home and returns where this visit looks back to.
+-- A new visit starts when the last one is older than @visit_start: previous_visit_at
+-- then takes the old last_seen_at. Within a visit, reloads keep the same answer.
+UPDATE app_user SET
+    previous_visit_at = CASE WHEN last_seen_at IS NULL OR last_seen_at < @visit_start::timestamptz
+                             THEN last_seen_at ELSE previous_visit_at END,
+    last_seen_at = now()
+WHERE id = @id
+RETURNING previous_visit_at;
+
+-- name: ListRequestsMovedSince :many
+-- The author's requests whose status changed after @since, the latest change first.
+SELECT r.*, c.title, c.state, c.state_reason, c.labels, c.milestone, u.name AS author_name,
+       m.at::timestamptz AS moved_at
+FROM request r
+JOIN issue_cache c ON c.repo_owner = r.repo_owner AND c.repo_name = r.repo_name AND c.issue_number = r.issue_number
+JOIN app_user u ON u.id = r.author_id
+JOIN LATERAL (SELECT max(s.at) AS at FROM request_status s WHERE s.request_id = r.id) m ON true
+WHERE r.author_id = @author_id AND m.at > @since::timestamptz
+ORDER BY m.at DESC
+LIMIT 50;

@@ -13,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 
 	"github.com/C2-POLY/hublot/internal/authz"
 	"github.com/C2-POLY/hublot/internal/config"
@@ -48,8 +49,12 @@ type RequestView struct {
 	CreatedAt   time.Time        `json:"createdAt"`
 	Author      AuthorRef        `json:"author"`
 	Attachments []AttachmentView `json:"attachments"`
+	// Milestone is the version the request is planned for; only in the detail.
+	Milestone string `json:"milestone,omitempty"`
 	// History lists the status changes, oldest first; only in the detail.
 	History []StatusChange `json:"history,omitempty"`
+	// MovedAt is when the status last changed; only in the home's moved list.
+	MovedAt *time.Time `json:"movedAt,omitempty"`
 }
 
 type StatusChange struct {
@@ -264,9 +269,44 @@ func (s *Service) authorEmail(email string) string {
 	return forge.MaskEmail(email)
 }
 
-// ListMine returns the subject's own requests that they may still see.
-func (s *Service) ListMine(ctx context.Context, sub authz.Subject) ([]RequestView, error) {
-	rows, err := s.Q.ListRequestsByAuthor(ctx, sub.UserID)
+// ListFilter narrows a request list. Empty fields do not filter.
+type ListFilter struct {
+	Project string // project slug (scope mine; scope all names its project apart)
+	Kind    string
+	Status  string
+}
+
+// validate checks the kind and status filters, adding the wrong ones to invalid.
+func (f ListFilter) validate(invalid map[string]string) {
+	if f.Kind != "" && !slices.Contains(config.Kinds, f.Kind) {
+		invalid["kind"] = "invalid"
+	}
+	if f.Status != "" && !slices.Contains(Statuses, f.Status) {
+		invalid["status"] = "invalid"
+	}
+}
+
+func optText(v string) pgtype.Text { return pgtype.Text{String: v, Valid: v != ""} }
+
+// ListMine returns the subject's own requests that they may still see. A project
+// filter must name a project they may view: an unknown and a hidden one answer alike.
+func (s *Service) ListMine(ctx context.Context, sub authz.Subject, f ListFilter) ([]RequestView, error) {
+	invalid := map[string]string{}
+	f.validate(invalid)
+	var project uuid.NullUUID
+	if f.Project != "" {
+		p, ok := s.projectBySlug(f.Project)
+		if !ok || !authz.Can(sub, authz.ViewProject, authzProject(p)) {
+			invalid["project"] = "invalid"
+		}
+		project = uuid.NullUUID{UUID: p.ID, Valid: true}
+	}
+	if len(invalid) > 0 {
+		return nil, &ValidationError{Fields: invalid}
+	}
+	rows, err := s.Q.ListRequestsByAuthor(ctx, db.ListRequestsByAuthorParams{
+		AuthorID: sub.UserID, ProjectID: project, Kind: optText(f.Kind), Status: optText(f.Status),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +320,12 @@ func (s *Service) ListMine(ctx context.Context, sub authz.Subject) ([]RequestVie
 }
 
 // ListProject returns every request of a project the subject may see.
-func (s *Service) ListProject(ctx context.Context, sub authz.Subject, slug string) ([]RequestView, error) {
+func (s *Service) ListProject(ctx context.Context, sub authz.Subject, slug string, f ListFilter) ([]RequestView, error) {
+	invalid := map[string]string{}
+	f.validate(invalid)
+	if len(invalid) > 0 {
+		return nil, &ValidationError{Fields: invalid}
+	}
 	p, ok := s.projectBySlug(slug)
 	if !ok || !authz.Can(sub, authz.ViewProject, authzProject(p)) {
 		return nil, ErrNotFound
@@ -290,13 +335,55 @@ func (s *Service) ListProject(ctx context.Context, sub authz.Subject, slug strin
 			return nil, err
 		}
 	}
-	rows, err := s.Q.ListRequestsByProject(ctx, p.ID)
+	rows, err := s.Q.ListRequestsByProject(ctx, db.ListRequestsByProjectParams{
+		ProjectID: p.ID, Kind: optText(f.Kind), Status: optText(f.Status),
+	})
 	if err != nil {
 		return nil, err
 	}
 	out := []RequestView{}
 	for _, r := range rows {
 		if v, ok := s.visible(sub, requestRow(r)); ok {
+			out = append(out, v)
+		}
+	}
+	return out, nil
+}
+
+// VisitGap is how long the person must have been away for the home to start a new
+// visit: within a visit, reloading the home keeps showing what moved since the last one.
+const VisitGap = 30 * time.Minute
+
+// homeMoved is how many moved requests the home shows.
+const homeMoved = 5
+
+// MovedSinceLastVisit records that the subject opened the home and returns their
+// requests whose status changed since their previous visit, that they may still see,
+// the latest change first. The first visit ever has nothing to compare with.
+func (s *Service) MovedSinceLastVisit(ctx context.Context, sub authz.Subject) ([]RequestView, error) {
+	since, err := s.Q.StartVisit(ctx, db.StartVisitParams{ID: sub.UserID, VisitStart: time.Now().Add(-VisitGap)})
+	if err != nil {
+		return nil, err
+	}
+	out := []RequestView{}
+	if since == nil {
+		return out, nil
+	}
+	rows, err := s.Q.ListRequestsMovedSince(ctx, db.ListRequestsMovedSinceParams{AuthorID: sub.UserID, Since: *since})
+	if err != nil {
+		return nil, err
+	}
+	for _, r := range rows {
+		if len(out) == homeMoved {
+			break
+		}
+		v, ok := s.visible(sub, row{
+			ID: r.ID, ProjectID: r.ProjectID, OriginProjectID: r.OriginProjectID, AuthorID: r.AuthorID,
+			Kind: r.Kind, Title: r.Title, Status: r.Status, AuthorName: r.AuthorName,
+			Labels: r.Labels, IssueNumber: r.IssueNumber, CreatedAt: r.CreatedAt,
+		})
+		if ok {
+			v.MovedAt = &r.MovedAt
 			out = append(out, v)
 		}
 	}
@@ -336,16 +423,17 @@ func (s *Service) GetRequest(ctx context.Context, sub authz.Subject, id uuid.UUI
 	for _, h := range history {
 		v.History = append(v.History, StatusChange{Status: h.Status, At: h.At})
 	}
+	v.Milestone = row.Milestone
 	return v, nil
 }
 
 // row is the common shape of the request list queries.
 type row struct {
-	ID, ProjectID, OriginProjectID, AuthorID uuid.UUID
-	Kind, Title, Status, AuthorName          string
-	Labels                                   []string
-	IssueNumber                              int32
-	CreatedAt                                time.Time
+	ID, ProjectID, OriginProjectID, AuthorID   uuid.UUID
+	Kind, Title, Status, AuthorName, Milestone string
+	Labels                                     []string
+	IssueNumber                                int32
+	CreatedAt                                  time.Time
 }
 
 func requestRow[T db.GetRequestRow | db.ListRequestsByAuthorRow | db.ListRequestsByProjectRow | db.ListTriageInboxRow](r T) row {
@@ -354,7 +442,7 @@ func requestRow[T db.GetRequestRow | db.ListRequestsByAuthorRow | db.ListRequest
 	return row{
 		ID: g.ID, ProjectID: g.ProjectID, OriginProjectID: g.OriginProjectID, AuthorID: g.AuthorID,
 		Kind: g.Kind, Title: g.Title, Status: g.Status, AuthorName: g.AuthorName,
-		Labels: g.Labels, IssueNumber: g.IssueNumber, CreatedAt: g.CreatedAt,
+		Labels: g.Labels, IssueNumber: g.IssueNumber, CreatedAt: g.CreatedAt, Milestone: g.Milestone,
 	}
 }
 

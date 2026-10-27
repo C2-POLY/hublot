@@ -108,7 +108,8 @@ export function TriagePage() {
         )}
       </div>
 
-      <p role="status" aria-live="polite" className="m-0 min-h-5 text-[15px] font-bold">
+      {/* One line of fixed height, so a message never pushes the cards down. */}
+      <p role="status" aria-live="polite" title={message || undefined} className="m-0 h-6 truncate text-[15px] font-bold leading-6">
         {message}
       </p>
       {failure && (

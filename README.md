@@ -11,16 +11,17 @@ and a disposable cache.
 The full product brief, decisions and mockups are in [`docs/HUBLOT-reprise.md`](docs/HUBLOT-reprise.md)
 and [`docs/design/maquettes/`](docs/design/maquettes/). The HTTP API is in [`docs/api.md`](docs/api.md).
 
-## Status: milestone 1
+## Status: 0.2.0
 
-| Done | Next (milestone 2+) |
+| Done | Next |
 |---|---|
-| Magic-link sign-in limited to allowed domains | Webhooks, cache refresh, full status lifecycle |
-| Per-project RBAC, groups, deny by default, isolation test suite | Notifications |
-| Request forms read from `.github/ISSUE_TEMPLATE/*.yml` | Roadmap, release notes, two-way comments |
-| Filing a request with attachments (fs or S3) | Guided feature/issue creation, MCP server |
-| SPA: sign-in, home, new request, my requests, tracking | Admin screens (access, settings), OIDC |
-| Triage inbox: accept, change kind, transfer, confidential, close (written to GitHub) | |
+| Magic-link sign-in limited to allowed domains | Roadmap and release notes |
+| Per-project RBAC, groups, deny by default, isolation test suite | Two-way comments |
+| Request forms read from `.github/ISSUE_TEMPLATE/*.yml`, filing with attachments (fs or S3) | Votes, "me too" |
+| GitHub webhooks, issue cache, periodic resync, status history | Guided feature/issue creation, MCP server |
+| Status e-mails, with a preference to turn them off | Statuses from deployments, priority field |
+| Triage inbox: accept, change kind, transfer, confidential, close (written to GitHub) | Daily digest |
+| My/all requests with filters, parcel timeline, "moved since your last visit" | Admin screens (access, settings), OIDC |
 
 ## Stack
 

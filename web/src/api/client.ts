@@ -101,6 +101,19 @@ export interface PortalRequest {
   createdAt: string
   author: { name: string }
   attachments: Attachment[]
+  // Detail only: the version it is planned for, and the status changes, oldest first.
+  milestone?: string
+  history?: { status: Status; at: string }[]
+  // Home only: when its status last changed.
+  movedAt?: string
+}
+
+// Server-side list filters (docs/api.md). scope all needs a project.
+export interface RequestFilter {
+  scope: 'mine' | 'all'
+  project?: string
+  kind?: Kind
+  status?: Status
 }
 
 export interface TriageInbox {
@@ -193,6 +206,15 @@ export const api = {
   deleteAttachment: (id: string) => request<void>('DELETE', `/api/attachments/${encodeURIComponent(id)}`),
   createRequest: (body: NewRequest) => request<PortalRequest>('POST', '/api/requests', body),
   myRequests: () => request<{ requests: PortalRequest[] }>('GET', '/api/requests?scope=mine'),
+  requests: (f: RequestFilter) => {
+    const q = new URLSearchParams({ scope: f.scope })
+    if (f.project) q.set('project', f.project)
+    if (f.kind) q.set('kind', f.kind)
+    if (f.status) q.set('status', f.status)
+    return request<{ requests: PortalRequest[] }>('GET', `/api/requests?${q}`)
+  },
+  // Records the visit: what moved since the previous one.
+  home: () => request<{ moved: PortalRequest[] }>('GET', '/api/home'),
   getRequest: (id: string) => request<PortalRequest>('GET', `/api/requests/${encodeURIComponent(id)}`),
   triageInbox: () => request<TriageInbox>('GET', '/api/triage'),
   // 204 (no body) when the person can no longer see the request after the action.

@@ -2,11 +2,11 @@
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { Kind } from '../api/client'
-import { useMyRequests } from '../api/hooks'
+import { useHome, useMyRequests } from '../api/hooks'
 import { VehicleEmblem } from '../components/Emblem'
 import { RequestRow } from '../components/RequestRow'
 import { EmptyState, ErrorState, Loading } from '../components/States'
-import { firstName } from '../lib/format'
+import { firstName, formatDay } from '../lib/format'
 import { useCurrentUser } from '../lib/me'
 import { isActive } from '../lib/status'
 
@@ -17,9 +17,12 @@ const QUICK: { kind: Kind; className: string }[] = [
 ]
 
 export function HomePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const me = useCurrentUser()
   const requests = useMyRequests()
+  // Loading the home records the visit: what moved since the previous one.
+  const home = useHome()
+  const moved = home.data?.moved ?? []
   const list = requests.data?.requests ?? []
   const active = list.filter((r) => isActive(r.status))
   const available = list.filter((r) => r.status === 'available')
@@ -100,7 +103,7 @@ export function HomePage() {
       </section>
 
       <section aria-labelledby="home-moving" className="flex flex-col gap-2.5">
-        <div className="flex items-baseline justify-between">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4">
           <h2 id="home-moving" className="m-0 text-[26px]">
             {t('home.moving')}
           </h2>
@@ -110,13 +113,21 @@ export function HomePage() {
             </Link>
           )}
         </div>
-        {requests.isPending && <Loading />}
-        {requests.isError && <ErrorState message={t('common.error')} onRetry={() => void requests.refetch()} />}
-        {requests.isSuccess &&
-          (list.length === 0 ? (
-            <EmptyState>{t('home.empty')}</EmptyState>
+        {home.isPending && <Loading />}
+        {home.isError && <ErrorState message={t('common.error')} onRetry={() => void home.refetch()} />}
+        {home.isSuccess &&
+          (moved.length === 0 ? (
+            <p className="m-0 text-[17px] text-ink-2">{t('home.empty')}</p>
           ) : (
-            list.slice(0, 5).map((r) => <RequestRow key={r.id} request={r} />)
+            moved.map((r) => (
+              <RequestRow
+                key={r.id}
+                request={r}
+                meta={`${r.project.name} · ${t(`home.moved.${r.status}`, {
+                  date: formatDay(r.movedAt ?? r.createdAt, i18n.language),
+                })}`}
+              />
+            ))
           ))}
       </section>
     </div>

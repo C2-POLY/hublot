@@ -13,6 +13,10 @@ const (
 	StatusClosed     = "closed"
 )
 
+// Statuses lists every portal status, in timeline order then the two other endings.
+var Statuses = []string{StatusReceived, StatusPlanned, StatusInProgress, StatusInTest, StatusAvailable,
+	StatusAnswered, StatusClosed}
+
 // IssueState is what the status is computed from: the cached issue.
 type IssueState struct {
 	State         string

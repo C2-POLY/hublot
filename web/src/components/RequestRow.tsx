@@ -7,7 +7,16 @@ import { timelineIndex } from '../lib/status'
 import { PrivateBadge, StatusPill } from './StatusPill'
 
 /** One request in a list: project colour stripe, title, meta, (progress), status. */
-export function RequestRow({ request: r, showProgress = false }: { request: PortalRequest; showProgress?: boolean }) {
+export function RequestRow({
+  request: r,
+  showProgress = false,
+  meta,
+}: {
+  request: PortalRequest
+  showProgress?: boolean
+  // Replaces the default meta line (project · kind · sent on).
+  meta?: string
+}) {
   const { t, i18n } = useTranslation()
   const date = formatDay(r.createdAt, i18n.language)
   const step = timelineIndex(r.status) + 1
@@ -25,7 +34,7 @@ export function RequestRow({ request: r, showProgress = false }: { request: Port
           {r.private && <PrivateBadge />}
         </span>
         <span className="text-sm text-ink-2">
-          {t('requests.meta', { project: r.project.name, kind: t(`kinds.${r.kind}.lower`), date })}
+          {meta ?? t('requests.meta', { project: r.project.name, kind: t(`kinds.${r.kind}.lower`), date })}
         </span>
       </span>
       {showProgress && (
