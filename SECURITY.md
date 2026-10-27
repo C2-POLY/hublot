@@ -19,9 +19,9 @@ days. Fixes are released before the details are published.
   State-changing API calls require an `X-Hublot` header (CSRF guard).
 - Attachments: the type is detected from the content (PNG, JPEG, GIF, WebP, PDF, plain text;
   never SVG or HTML), size is capped, files are served with a sandboxing CSP and `nosniff`.
-- Attachment links written in GitHub issues are HMAC-signed per file, so developers can
-  open them without a portal account. Anyone holding such a link can open that one file:
-  treat issue bodies accordingly. With S3 storage the link redirects to a 5-minute URL.
+- Attachment links written in GitHub issues open only with a Hublot session allowed to see
+  the attachment: every team member has a Hublot account. A leaked link opens nothing, and
+  making a request private or withdrawing a role closes access at once.
 - The GitHub App private key and every secret come from the environment or mounted files,
   never from the repository.
 - Role, group and grant changes, and consultations by admins without a project role, are

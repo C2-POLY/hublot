@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { api } from '../api/client'
 import { setLang, storedLang } from '../i18n'
 import { Loading } from '../components/States'
+import { takeReturnTo } from '../lib/returnTo'
 import { AuthLayout } from './AuthLayout'
 
 // A token is single use: never send it twice, even when React mounts twice in dev.
@@ -27,7 +28,10 @@ export function VerifyPage() {
       .then(({ user }) => {
         queryClient.setQueryData(['me'], user)
         if (!storedLang()) setLang(user.lang, false)
-        navigate('/', { replace: true })
+        const next = takeReturnTo()
+        // Files are served by the server, not by the SPA router.
+        if (next?.startsWith('/files/')) window.location.replace(next)
+        else navigate(next ?? '/', { replace: true })
       })
       .catch(() => setFailed(true))
   }, [token, navigate, queryClient])

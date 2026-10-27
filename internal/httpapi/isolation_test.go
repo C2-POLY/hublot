@@ -38,7 +38,6 @@ import (
 const testConfig = `
 base_url: http://portal.test
 database_url: unused
-secret: test-secret-0123456789abcdef0123456789
 auth:
   allowed_domains: [acme.test]
   bootstrap_owners: [boss@acme.test]
@@ -356,22 +355,27 @@ func TestIsolation(t *testing.T) {
 		eq(t, "someone who can file nowhere cannot upload", st, http.StatusForbidden)
 	})
 
-	t.Run("signed links written in the issue", func(t *testing.T) {
+	t.Run("links written in the issue need a Hublot session", func(t *testing.T) {
 		issues := e.forge.Created(forge.Repo{Owner: "acme", Name: "shop"})
 		link := regexp.MustCompile(`http://portal\.test(/files/[^)\s]+)`).FindStringSubmatch(issues[0].Body)
 		if link == nil {
-			t.Fatalf("no signed link in the body:\n%s", issues[0].Body)
+			t.Fatalf("no file link in the body:\n%s", issues[0].Body)
 		}
-		resp, err := http.Get(e.srv.URL + link[1])
+		noRedirect := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
+		resp, err := noRedirect.Get(e.srv.URL + link[1])
 		if err != nil {
 			t.Fatal(err)
 		}
 		resp.Body.Close()
-		eq(t, "signed link", resp.StatusCode, http.StatusOK)
-		eq(t, "sandboxed", strings.Contains(resp.Header.Get("Content-Security-Policy"), "sandbox"), true)
-		resp, _ = http.Get(e.srv.URL + "/files/" + attID + "?s=forged")
-		resp.Body.Close()
-		eq(t, "forged signature", resp.StatusCode, http.StatusNotFound)
+		eq(t, "signed out", resp.StatusCode, http.StatusFound)
+		eq(t, "back to the file after sign-in", resp.Header.Get("Location"), "/connexion?next="+url.QueryEscape(link[1]))
+
+		st, _ := marie.do("GET", link[1], nil)
+		eq(t, "the author", st, http.StatusOK)
+		st, _ = tom.do("GET", link[1], nil)
+		eq(t, "a triager of the project", st, http.StatusOK)
+		st, _ = paul.do("GET", link[1], nil)
+		eq(t, "someone without a role on the project", st, http.StatusNotFound)
 	})
 }
 

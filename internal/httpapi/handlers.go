@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -226,14 +227,29 @@ func (s *Server) deleteAttachment(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// signedFile serves the attachment links written in issue bodies, for developers on GitHub.
-func (s *Server) signedFile(w http.ResponseWriter, r *http.Request) {
+// file serves the attachment links written in issue bodies. Signed out, it sends the
+// person to sign in and back here; signed in, the usual rules apply.
+func (s *Server) file(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	a, rc, direct, err := s.Portal.OpenSigned(r.Context(), id, r.URL.Query().Get("s"))
+	user, err := s.sessionUser(w, r)
+	if errors.Is(err, auth.ErrNoSession) {
+		http.Redirect(w, r, "/connexion?next="+url.QueryEscape("/files/"+id.String()), http.StatusFound)
+		return
+	}
+	if err != nil {
+		s.internal(w, r, err)
+		return
+	}
+	sub, err := s.Portal.Subject(r.Context(), user)
+	if err != nil {
+		s.internal(w, r, err)
+		return
+	}
+	a, rc, err := s.Portal.OpenAttachment(r.Context(), sub, id)
 	if errors.Is(err, portal.ErrNotFound) {
 		http.NotFound(w, r)
 		return
@@ -242,13 +258,9 @@ func (s *Server) signedFile(w http.ResponseWriter, r *http.Request) {
 		s.internal(w, r, err)
 		return
 	}
-	if direct != "" {
-		w.Header().Set("Cache-Control", "no-store")
-		http.Redirect(w, r, direct, http.StatusFound)
-		return
-	}
 	defer rc.Close()
 	serveFile(w, a, rc)
+	w.Header().Set("Cache-Control", "no-store")
 }
 
 // serveFile sends a stored file so that it can never run as a page of the portal.

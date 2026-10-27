@@ -8,6 +8,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': process.env.HUBLOT_API ?? 'http://localhost:8080',
+      '/files': process.env.HUBLOT_API ?? 'http://localhost:8080',
     },
   },
   build: {

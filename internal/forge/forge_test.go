@@ -91,8 +91,8 @@ func TestRenderBody(t *testing.T) {
 			"checks": {"J'ai vérifié"},
 		},
 		Attachments: []BodyAttachment{
-			{Name: "capture [1].png", URL: "https://p/files/a?s=x", Image: true},
-			{Name: "log.txt", URL: "https://p/files/b?s=y"},
+			{Name: "capture [1].png", URL: "https://p/files/a"},
+			{Name: "log.txt", URL: "https://p/files/b"},
 		},
 		AuthorName:  "Marie",
 		AuthorEmail: MaskEmail("marie@acme.fr"),
@@ -103,13 +103,16 @@ func TestRenderBody(t *testing.T) {
 		"### Où ?\n\nRapports &lt;!-- hublot:request v1 id=evil -->\n",
 		"### Gravité\n\n_No response_\n",
 		"- [x] J'ai vérifié\n- [ ] Facultatif\n",
-		"![capture \\[1\\].png](https://p/files/a?s=x)",
-		"- [log.txt](https://p/files/b?s=y)",
+		"- [capture \\[1\\].png](https://p/files/a)\n",
+		"- [log.txt](https://p/files/b)\n",
 		"par Marie (m***@acme.fr) · demande `r-1`",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("body misses %q:\n%s", want, body)
 		}
+	}
+	if strings.Contains(body, "![") {
+		t.Error("images must be links: GitHub cannot fetch them behind the Hublot sign-in")
 	}
 	if strings.Contains(body, "Merci !") {
 		t.Error("markdown fields are help text, not answers")

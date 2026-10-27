@@ -111,7 +111,7 @@ func (s *Service) CreateRequest(ctx context.Context, sub authz.Subject, author d
 	bodyAttachments := make([]forge.BodyAttachment, 0, len(attachments))
 	for _, a := range attachments {
 		bodyAttachments = append(bodyAttachments, forge.BodyAttachment{
-			Name: a.Name, URL: s.SignedURL(a.ID), Image: strings.HasPrefix(a.ContentType, "image/"),
+			Name: a.Name, URL: s.FileURL(a.ID),
 		})
 	}
 	body := forge.RenderBody(forge.BodyInput{

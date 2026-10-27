@@ -90,6 +90,12 @@ The forms come from the repository's `.github/ISSUE_TEMPLATE/*.yml` files, mappe
 
 Accepted types (checked on the content, not the extension): PNG, JPEG, GIF, WebP, PDF, plain text. Maximum 10 MB by default.
 
+Issue bodies link each attachment as `{base_url}/files/{id}`, outside `/api` so it opens in a
+browser tab. It follows the same rules as `GET /api/attachments/{id}`. Signed out, it answers
+`302` to `/connexion?next=/files/{id}`, and the person comes back to the file after signing in.
+Attachments are plain links in the issue, never inline images: GitHub fetches images without
+the reader's Hublot session.
+
 ## Requests
 
 ### Create

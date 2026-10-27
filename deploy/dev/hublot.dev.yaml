@@ -3,7 +3,6 @@
 base_url: ${HUBLOT_BASE_URL}
 listen: ${HUBLOT_LISTEN}
 database_url: ${HUBLOT_DATABASE_URL}
-secret: dev-secret-not-for-production-0123456789abcdef
 web_dir: ${HUBLOT_WEB_DIR}
 
 auth:

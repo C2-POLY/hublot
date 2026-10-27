@@ -10,7 +10,6 @@ import (
 const minimal = `
 base_url: https://portal.example.com/
 database_url: postgres://x
-secret: 0123456789abcdef0123456789abcdef
 auth: {allowed_domains: [Example.com]}
 mail: {driver: log}
 storage: {dir: /tmp/x}
@@ -38,7 +37,6 @@ func TestDefaults(t *testing.T) {
 func TestValidation(t *testing.T) {
 	_, err := Parse(`
 base_url: not-a-url
-secret: short
 projects:
   - {slug: Shop!, color: blue, vehicle: horse, repo: shop}
   - {slug: a, name: A, color: "#FFFFFF", vehicle: boat, repo: o/a, inbox: true}
@@ -47,7 +45,7 @@ projects:
 	if err == nil {
 		t.Fatal("expected errors")
 	}
-	for _, want := range []string{"base_url", "database_url", "secret", "allowed_domains", "slug", "name is required",
+	for _, want := range []string{"base_url", "database_url", "allowed_domains", "slug", "name is required",
 		"color", "vehicle", "owner/name", "only one project can be the inbox"} {
 		if !strings.Contains(err.Error(), want) {
 			t.Errorf("missing %q in:\n%v", want, err)
@@ -64,7 +62,6 @@ func TestExpandOnlyExplicitReferences(t *testing.T) {
 
 func TestExampleConfigIsValid(t *testing.T) {
 	t.Setenv("HUBLOT_DATABASE_URL", "postgres://x")
-	t.Setenv("HUBLOT_SECRET", strings.Repeat("s", 40))
 	t.Setenv("HUBLOT_GITHUB_APP_ID", "1")
 	t.Setenv("HUBLOT_GITHUB_INSTALLATION_ID", "2")
 	if _, err := Load("../../hublot.example.yaml"); err != nil {

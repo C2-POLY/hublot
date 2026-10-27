@@ -5,9 +5,6 @@ package portal
 import (
 	"bytes"
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -171,41 +168,11 @@ func (s *Service) ownUnlinked(ctx context.Context, author uuid.UUID, ids []uuid.
 	return out, nil
 }
 
-// SignedURL is the link written in the issue body. Developers read issues in GitHub
-// without a portal account, so the link carries an HMAC instead of a session; it
-// works only for that attachment and cannot be guessed.
-func (s *Service) SignedURL(id uuid.UUID) string {
-	return fmt.Sprintf("%s/files/%s?s=%s", s.Cfg.BaseURL, id, s.sign(id))
-}
-
-func (s *Service) sign(id uuid.UUID) string {
-	mac := hmac.New(sha256.New, []byte(s.Cfg.Secret))
-	mac.Write([]byte("attachment:" + id.String()))
-	return base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
-}
-
-// SignedTTL bounds the direct storage URL a signed link redirects to.
-const SignedTTL = 5 * time.Minute
-
-// OpenSigned serves a signed link. With an S3 store it returns a short-lived direct
-// URL instead of a reader.
-func (s *Service) OpenSigned(ctx context.Context, id uuid.UUID, sig string) (db.Attachment, io.ReadCloser, string, error) {
-	if !hmac.Equal([]byte(sig), []byte(s.sign(id))) {
-		return db.Attachment{}, nil, "", ErrNotFound
-	}
-	a, err := s.Q.GetAttachment(ctx, id)
-	if errors.Is(err, pgx.ErrNoRows) || (err == nil && !a.RequestID.Valid) {
-		return db.Attachment{}, nil, "", ErrNotFound
-	}
-	if err != nil {
-		return db.Attachment{}, nil, "", err
-	}
-	if p, ok := s.Store.(storage.Presigner); ok {
-		u, err := p.PresignGet(ctx, a.ObjectKey, SignedTTL, a.Name)
-		return a, nil, u, err
-	}
-	a, rc, err := s.open(ctx, a)
-	return a, rc, "", err
+// FileURL is the link written in the issue body. It opens only with a Hublot session
+// allowed to see the attachment, like any other page of the portal: team members
+// reading the issue on GitHub sign in to Hublot too.
+func (s *Service) FileURL(id uuid.UUID) string {
+	return s.Cfg.BaseURL + "/files/" + id.String()
 }
 
 func (s *Service) open(ctx context.Context, a db.Attachment) (db.Attachment, io.ReadCloser, error) {

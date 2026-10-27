@@ -33,7 +33,7 @@ internal/authz      the single authorization function Can(subject, action, resou
 internal/auth       magic links and sessions
 internal/portal     projects, requests, attachments (every call goes through authz)
 internal/forge      GitHub adapter (GitHub App), fake forge for development, issue forms
-internal/httpapi    JSON API, signed attachment links, SPA serving
+internal/httpapi    JSON API, attachment links, SPA serving
 internal/db         migrations and sqlc queries
 web/                the SPA
 deploy/dev          development configuration and sample issue forms

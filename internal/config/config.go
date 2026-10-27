@@ -19,11 +19,9 @@ import (
 )
 
 type Config struct {
-	BaseURL     string `yaml:"base_url"`
-	Listen      string `yaml:"listen"`
-	DatabaseURL string `yaml:"database_url"`
-	// Secret signs attachment links and must be long and random.
-	Secret          string        `yaml:"secret"`
+	BaseURL         string        `yaml:"base_url"`
+	Listen          string        `yaml:"listen"`
+	DatabaseURL     string        `yaml:"database_url"`
 	CookieSecure    *bool         `yaml:"cookie_secure"`
 	SessionLifetime time.Duration `yaml:"session_lifetime"`
 	// TrustProxyHeaders reads the client IP from X-Forwarded-For / X-Real-IP. Enable it only
@@ -219,9 +217,6 @@ func (c *Config) validate() error {
 	}
 	if c.DatabaseURL == "" {
 		errs = append(errs, errors.New("database_url is required"))
-	}
-	if len(c.Secret) < 32 {
-		errs = append(errs, errors.New("secret must be at least 32 characters"))
 	}
 	if len(c.Auth.AllowedDomains) == 0 {
 		errs = append(errs, errors.New("auth.allowed_domains needs at least one domain"))

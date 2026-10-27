@@ -27,9 +27,8 @@ type BodyInput struct {
 }
 
 type BodyAttachment struct {
-	Name  string
-	URL   string
-	Image bool
+	Name string
+	URL  string
 }
 
 // RenderBody writes the issue body the way GitHub renders a submitted issue form
@@ -68,12 +67,9 @@ func RenderBody(in BodyInput) string {
 	if len(in.Attachments) > 0 {
 		fmt.Fprintf(&b, "### %s\n\n", t["attachments"])
 		for _, a := range in.Attachments {
-			name := escapeLinkText(a.Name)
-			if a.Image {
-				fmt.Fprintf(&b, "![%s](%s)\n\n", name, a.URL)
-			} else {
-				fmt.Fprintf(&b, "- [%s](%s)\n", name, a.URL)
-			}
+			// A link, never an inline image: GitHub fetches images without the reader's
+			// Hublot session, so they would show broken.
+			fmt.Fprintf(&b, "- [%s](%s)\n", escapeLinkText(a.Name), a.URL)
 		}
 		b.WriteString("\n")
 	}

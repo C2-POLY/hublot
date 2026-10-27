@@ -8,11 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -22,11 +20,6 @@ type Store interface {
 	Put(ctx context.Context, key string, r io.Reader, size int64, contentType string) error
 	Open(ctx context.Context, key string) (io.ReadCloser, error)
 	Delete(ctx context.Context, key string) error
-}
-
-// Presigner is implemented by stores that can hand out a short-lived direct URL.
-type Presigner interface {
-	PresignGet(ctx context.Context, key string, ttl time.Duration, filename string) (string, error)
 }
 
 var ErrNotFound = errors.New("storage: not found")
@@ -129,14 +122,4 @@ func (s *S3) Open(ctx context.Context, key string) (io.ReadCloser, error) {
 
 func (s *S3) Delete(ctx context.Context, key string) error {
 	return s.client.RemoveObject(ctx, s.bucket, key, minio.RemoveObjectOptions{})
-}
-
-func (s *S3) PresignGet(ctx context.Context, key string, ttl time.Duration, filename string) (string, error) {
-	params := url.Values{}
-	params.Set("response-content-disposition", "inline; filename*=UTF-8''"+url.PathEscape(filename))
-	u, err := s.client.PresignedGetObject(ctx, s.bucket, key, ttl, params)
-	if err != nil {
-		return "", err
-	}
-	return u.String(), nil
 }

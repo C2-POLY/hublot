@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useSearchParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { api, ApiError } from '../api/client'
+import { rememberReturnTo } from '../lib/returnTo'
 import { AuthLayout } from './AuthLayout'
 
 export function LoginPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
 
@@ -30,6 +32,7 @@ export function LoginPage() {
       return
     }
     setError(null)
+    rememberReturnTo(params.get('next'))
     send.mutate(address)
   }
 

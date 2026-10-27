@@ -52,7 +52,7 @@ func (s *Server) Handler() http.Handler {
 	r.Use(requestLogger, middleware.Recoverer, securityHeaders)
 
 	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) })
-	r.Get("/files/{id}", s.signedFile)
+	r.Get("/files/{id}", s.file)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(csrfGuard, noStore)
@@ -120,16 +120,23 @@ func requestLogger(next http.Handler) http.Handler {
 	})
 }
 
+// sessionUser returns the person behind the session cookie, or auth.ErrNoSession.
+func (s *Server) sessionUser(w http.ResponseWriter, r *http.Request) (db.AppUser, error) {
+	c, err := r.Cookie(SessionCookie)
+	if err != nil {
+		return db.AppUser{}, auth.ErrNoSession
+	}
+	user, err := s.Auth.SessionUser(r.Context(), c.Value)
+	if errors.Is(err, auth.ErrNoSession) {
+		s.clearCookie(w)
+	}
+	return user, err
+}
+
 func (s *Server) requireSession(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		c, err := r.Cookie(SessionCookie)
-		if err != nil {
-			writeError(w, http.StatusUnauthorized, "unauthenticated", nil)
-			return
-		}
-		user, err := s.Auth.SessionUser(r.Context(), c.Value)
+		user, err := s.sessionUser(w, r)
 		if errors.Is(err, auth.ErrNoSession) {
-			s.clearCookie(w)
 			writeError(w, http.StatusUnauthorized, "unauthenticated", nil)
 			return
 		}

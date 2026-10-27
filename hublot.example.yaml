@@ -4,9 +4,6 @@
 base_url: https://hublot.example.com
 listen: ":8080"
 database_url: ${HUBLOT_DATABASE_URL}
-# At least 32 random characters; signs the attachment links written in issues.
-# Generate one with: openssl rand -base64 48
-secret: ${HUBLOT_SECRET}
 # Read the client IP from X-Forwarded-For: only behind a reverse proxy that sets it.
 trust_proxy_headers: false
 # web_dir: web/dist  # serve the SPA from disk (binaries built without -tags embedweb)
