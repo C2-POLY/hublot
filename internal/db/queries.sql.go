@@ -758,6 +758,23 @@ func (q *Queries) ListRequestsByProject(ctx context.Context, projectID uuid.UUID
 	return items, nil
 }
 
+const maxIssueNumber = `-- name: MaxIssueNumber :one
+SELECT COALESCE(max(issue_number), 0)::int AS number FROM request WHERE repo_owner = $1 AND repo_name = $2
+`
+
+type MaxIssueNumberParams struct {
+	RepoOwner string
+	RepoName  string
+}
+
+// The fake forge continues from here after a restart, so numbers never collide.
+func (q *Queries) MaxIssueNumber(ctx context.Context, arg MaxIssueNumberParams) (int32, error) {
+	row := q.db.QueryRow(ctx, maxIssueNumber, arg.RepoOwner, arg.RepoName)
+	var number int32
+	err := row.Scan(&number)
+	return number, err
+}
+
 const touchSession = `-- name: TouchSession :exec
 UPDATE user_session SET last_seen_at = now() WHERE token_hash = $1
 `

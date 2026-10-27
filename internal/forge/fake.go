@@ -17,14 +17,17 @@ import (
 // and issues live in memory.
 type Fake struct {
 	forms fs.FS
+	// LastNumber, when set, gives the highest issue number already used in a repository,
+	// so numbering survives a restart while the database keeps the earlier requests.
+	LastNumber func(context.Context, Repo) (int, error)
 
 	mu     sync.Mutex
-	issues map[string][]Issue
+	last   map[string]int
 	bodies map[string][]NewIssue
 }
 
 func NewFake(forms fs.FS) *Fake {
-	return &Fake{forms: forms, issues: map[string][]Issue{}, bodies: map[string][]NewIssue{}}
+	return &Fake{forms: forms, last: map[string]int{}, bodies: map[string][]NewIssue{}}
 }
 
 func (f *Fake) IssueForms(_ context.Context, repo Repo) (map[string]IssueForm, error) {
@@ -58,14 +61,21 @@ func (f *Fake) CreateIssue(ctx context.Context, repo Repo, in NewIssue) (Issue, 
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	key := repo.String()
+	if _, seen := f.last[key]; !seen && f.LastNumber != nil {
+		n, err := f.LastNumber(ctx, repo)
+		if err != nil {
+			return Issue{}, err
+		}
+		f.last[key] = n
+	}
+	f.last[key]++
 	issue := Issue{
-		Number: len(f.issues[key]) + 1,
-		NodeID: fmt.Sprintf("FAKE_%s_%d", strings.ReplaceAll(key, "/", "_"), len(f.issues[key])+1),
+		Number: f.last[key],
+		NodeID: fmt.Sprintf("FAKE_%s_%d", strings.ReplaceAll(key, "/", "_"), f.last[key]),
 		Title:  in.Title,
 		State:  "open",
 		Labels: in.Labels,
 	}
-	f.issues[key] = append(f.issues[key], issue)
 	f.bodies[key] = append(f.bodies[key], in)
 	slog.InfoContext(ctx, "fake forge: issue created", "repo", key, "number", issue.Number, "title", in.Title, "labels", in.Labels)
 	return issue, nil

@@ -94,7 +94,7 @@ func run(ctx context.Context, cfgPath, cmd string, args []string) error {
 }
 
 func serve(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, q *db.Queries) error {
-	f, err := newForge(cfg)
+	f, err := newForge(cfg, q)
 	if err != nil {
 		return err
 	}
@@ -134,10 +134,15 @@ func serve(ctx context.Context, cfg *config.Config, pool *pgxpool.Pool, q *db.Qu
 	return httpServer.Shutdown(shutdown)
 }
 
-func newForge(cfg *config.Config) (forge.Forge, error) {
+func newForge(cfg *config.Config, q *db.Queries) (forge.Forge, error) {
 	if cfg.Forge.Driver == "fake" {
 		slog.Warn("fake forge: issues stay in memory and never reach GitHub")
-		return forge.NewFake(os.DirFS(cfg.Forge.FakeDir)), nil
+		fake := forge.NewFake(os.DirFS(cfg.Forge.FakeDir))
+		fake.LastNumber = func(ctx context.Context, r forge.Repo) (int, error) {
+			n, err := q.MaxIssueNumber(ctx, db.MaxIssueNumberParams{RepoOwner: r.Owner, RepoName: r.Name})
+			return int(n), err
+		}
+		return fake, nil
 	}
 	g := cfg.Forge.GitHub
 	return forge.NewGitHub(g.AppID, g.InstallationID, g.PrivateKeyPath, g.APIURL)

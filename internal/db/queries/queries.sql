@@ -157,3 +157,7 @@ WHERE id = @id AND author_id = @author_id AND request_id IS NULL;
 -- name: DeleteUnlinkedAttachment :one
 DELETE FROM attachment WHERE id = $1 AND author_id = $2 AND request_id IS NULL
 RETURNING object_key;
+
+-- name: MaxIssueNumber :one
+-- The fake forge continues from here after a restart, so numbers never collide.
+SELECT COALESCE(max(issue_number), 0)::int AS number FROM request WHERE repo_owner = $1 AND repo_name = $2;

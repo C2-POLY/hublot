@@ -142,6 +142,23 @@ func TestFakeForgeReadsDevForms(t *testing.T) {
 	}
 }
 
+func TestFakeForgeContinuesNumbering(t *testing.T) {
+	f := NewFake(os.DirFS("."))
+	f.LastNumber = func(_ context.Context, r Repo) (int, error) {
+		if r.Name == "shop" {
+			return 41, nil
+		}
+		return 0, nil
+	}
+	ctx, shop := context.Background(), Repo{Owner: "acme", Name: "shop"}
+	first, _ := f.CreateIssue(ctx, shop, NewIssue{Title: "a"})
+	second, _ := f.CreateIssue(ctx, shop, NewIssue{Title: "b"})
+	other, _ := f.CreateIssue(ctx, Repo{Owner: "acme", Name: "app"}, NewIssue{Title: "c"})
+	if first.Number != 42 || second.Number != 43 || other.Number != 1 {
+		t.Errorf("numbers: %d %d %d", first.Number, second.Number, other.Number)
+	}
+}
+
 func TestMaskEmail(t *testing.T) {
 	if got := MaskEmail("marie@acme.fr"); got != "m***@acme.fr" {
 		t.Error(got)
