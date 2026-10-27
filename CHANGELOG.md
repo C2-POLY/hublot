@@ -4,10 +4,39 @@ Notable changes to Hublot. The format follows [Keep a Changelog](https://keepach
 and versions follow [Semantic Versioning](https://semver.org/): while the version starts with 0,
 each 0.X.0 release delivers a milestone and nothing is promised stable yet.
 
-Planned: 0.2.0 webhooks, full status lifecycle, triage, notifications · 0.3.0 guided creation,
-MCP server · 0.4.0 production install and setup wizard · 1.0.0 open source release.
+Planned: 0.3.0 guided creation, MCP server · 0.4.0 production install and setup wizard ·
+1.0.0 open source release. Roadmap, release notes, comments, votes and deployment-based statuses
+are scheduled in between.
 
 ## [Unreleased]
+
+## [0.2.0] - 2026-10-27
+
+Milestone 2: requests follow what happens in GitHub, people are told when they move, and
+triagers sort everything in one place.
+
+### Added
+
+- GitHub App webhook (`/webhooks/github`): signature checked, deliveries deduplicated, work
+  queued in PostgreSQL (River). Issue changes, transfers and Project status changes update the
+  portal; a periodic resync, also available as `hublot resync`, repairs lost deliveries.
+- Request statuses computed from GitHub: an optional GitHub Project status field per project,
+  else the planned version, else open or closed and its reason. Every change is kept in a
+  status history.
+- E-mail to the author when their request changes status, once per status, in their language,
+  never to someone who can no longer see the request. Preferences page to turn it off.
+- Triage inbox for triagers, managers and admins across their projects: accept, change kind
+  (labels and optional issue type), move to another project, make private or public, close as
+  not planned or duplicate. Written to GitHub first, every action audited.
+- Filters by project, kind and status on my requests and all requests, kept in the address.
+- Parcel timeline on the request page with a plain sentence (the planned version when there is
+  one), vertical on phones.
+- Home block listing the requests that moved since the previous visit.
+- With the fake forge, `/dev/fake/issues/...` plays the part of GitHub for local development.
+
+### Changed
+
+- New requests carry the `portal:new` label until they are triaged.
 
 ## [0.1.0] - 2026-10-27
 
@@ -36,5 +65,6 @@ a GitHub issue.
 - One Docker image (binary with the web app embedded), PostgreSQL, a fake forge and Mailpit
   for local development.
 
-[Unreleased]: https://github.com/C2-POLY/hublot/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/C2-POLY/hublot/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/C2-POLY/hublot/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/C2-POLY/hublot/releases/tag/v0.1.0
